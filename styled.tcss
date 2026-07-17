@@ -1,0 +1,17 @@
+Static {
+    background: blue;
+    padding: 1 1;
+    text-align: center;
+}
+
+#static_with_id {
+    border: solid white;
+}
+
+.static_cl1 {
+    background: orange;
+}
+
+.static_cl2 {
+    border: dashed yellow;
+}
