@@ -24,7 +24,7 @@ class TextApp(App):
     def on_key(self, event):
         match event.key:
             case "q":
-                exit()
+                self.exit()
 
 
 def main() -> None:

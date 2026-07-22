@@ -34,7 +34,12 @@ ctrl+q
 ```
 
 To live update during debug
-must install package xxx first
+run the app module or the package entrypoint with Textual's dev runner:
 ```
-textual run --dev <name-of-file>
+.venv\Scripts\textual.exe run --dev privvy_cee_ui.app
+```
+
+Or run the app normally:
+```
+python -m privvy_cee_ui
 ```
