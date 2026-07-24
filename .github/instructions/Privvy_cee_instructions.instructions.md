@@ -9,3 +9,5 @@ Provide project context and coding guidelines that AI should follow when generat
 
 This project provides users with a interactive interface in the terminal (TUI) to manage thier own homelabs. The project will use IP addresses which will need to be configured via a VPN of choice, to connect to a service in the homelab and pull metrics such as hardware usage, drive temps/health and service health as well as some control to configure the servers and manage it.
 
+On the page for each services will be an updates notifications showing how many packages and what packages need to be updates 
+

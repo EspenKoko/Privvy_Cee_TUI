@@ -1,0 +1,20 @@
+Container {
+    layout: vertical;
+    align: left top;
+    height: 100%;
+    padding: 1 2;
+}
+
+ToggleMetrics {
+    width: auto;
+    margin-top: 2;
+    align: left middle;
+}
+
+Digits {
+    text-align: center;
+    margin: 1;
+    background: $boost;
+    padding: 1;
+}
+"""

@@ -1,0 +1,17 @@
+#host-panel {
+    border: round gray;
+    background: white;
+    color: black;
+    padding: 1;
+    margin: 1;
+    height: 10;
+}
+
+#server-panel {
+    border: round white;
+    color: black;
+    padding: 1;
+    margin: 1;
+    height: 10;
+}
+
