@@ -44,7 +44,7 @@ class HostPanel(Vertical):
 
     def on_mount(self) -> None:
         self._last_net = psutil.net_io_counters()
-        self.set_interval(1.0, self.refresh_stats)
+        # self.set_interval(1.0, self.refresh_stats)
 
     def refresh_stats(self) -> None:
         self.run_worker(self.poll_metrics, exclusive=True, thread=True)

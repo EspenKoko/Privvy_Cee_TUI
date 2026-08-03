@@ -30,3 +30,8 @@ class ServerPanel(Vertical):
         vm_table.add_columns("Name", "Status", "CPU", "RAM", "IP", "Uptime")
         vm_table.add_row("Ubuntu Server", "Running", "8%", "3.4GB", "10.0.0.10", "14d")
         vm_table.add_row("Debian Server", "Running", "16%", "2.8GB", "10.0.0.11", "10d")
+        vm_table.add_row("Debian Server", "Running", "16%", "2.8GB", "10.0.0.11", "10d")
+        vm_table.add_row("Debian Server", "Running", "16%", "2.8GB", "10.0.0.11", "10d")
+        vm_table.add_row("Debian Server", "Running", "16%", "2.8GB", "10.0.0.11", "10d")
+        vm_table.add_row("Debian Server", "Running", "16%", "2.8GB", "10.0.0.11", "10d")
+        vm_table.add_row("Debian Server", "Running", "16%", "2.8GB", "10.0.0.11", "10d")

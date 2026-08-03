@@ -14,9 +14,17 @@ APP_NAME = "privvy_cee_tui"
 KEYRING_SERVICE = "privvy_cee_tui"  # namespace for all our keyring entries
 
 
+def _strip_none(obj):
+    """Recursively remove keys whose value is None, since TOML has no null type."""
+    if isinstance(obj, dict):
+        return {k: _strip_none(v) for k, v in obj.items() if v is not None}
+    if isinstance(obj, list):
+        return [_strip_none(v) for v in obj]
+    return obj
+
+
 @dataclass
 class ServerConfig:
-    """Equivalent of a C# record — auto-generates __init__, __eq__, __repr__."""
     name: str
     host: str
     port: int = 22
@@ -51,7 +59,8 @@ class ConfigManager:
     """
 
     def __init__(self):
-        config_dir = Path(platformdirs.user_config_dir(APP_NAME))
+        # Saves to C:\Users\espen.koko\AppData\Local\privvy_cee_ui
+        config_dir = Path(platformdirs.user_config_dir(APP_NAME, appauthor=False))
         config_dir.mkdir(parents=True, exist_ok=True)
         self.config_path = config_dir / "config.toml"
         self.config: AppConfig = AppConfig()
@@ -75,6 +84,7 @@ class ConfigManager:
             "servers": [asdict(s) for s in self.config.servers],
             "settings": asdict(self.config.settings),
         }
+        data = _strip_none(data)  # drop None fields before writing, since TOML has no null
         with open(self.config_path, "wb") as f:
             tomli_w.dump(data, f)
 

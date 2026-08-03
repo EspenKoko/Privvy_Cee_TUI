@@ -38,12 +38,12 @@ ctrl+q
 To live update during debug
 run the app module or the package entrypoint with Textual's dev runner:
 ```
-.venv\Scripts\textual.exe run --dev privvy_cee_ui.app
+.venv\Scripts\textual.exe run --dev main
 ```
 
 Or run the app normally:
 ```
-python -m privvy_cee_ui
+python -m main
 
 <!-- When running as a module make sure you are in the module package's root -->
 python -m privvy_cee_ui.metrics.more_metrics
@@ -52,13 +52,16 @@ python -m privvy_cee_ui.metrics.more_metrics
 
 to live debug
 ```powershell
-textual run --dev privvy_cee_ui
+textual run --dev main
 ```
 
 in seporate terminal run
 ```powershell
 textual console
 ```
+
+All server config is saved to C:\Users\espen.koko\AppData\Local\privvy_cee_ui
+and the passwords are saved to windows crednetial manager
 
 
 ┌──────────────────────────────────────────────────────────────────────────────┐

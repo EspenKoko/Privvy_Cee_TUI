@@ -1,0 +1,120 @@
+from textual.screen import Screen
+from textual.containers import Vertical, Horizontal
+from textual.widgets import Header, Footer, Input, Button, Label, Static, Select, DataTable
+from textual.app import ComposeResult
+from textual import on
+
+from src.services.configuration import ConfigManager, ServerConfig, AppSettings
+
+
+class WelcomeScreen(Screen):
+    """First screen shown on a fresh install."""
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Vertical(id="welcome-box"):
+            yield Static("👋 Welcome to Privvy_Cee_TUI", id="welcome-title")
+            yield Static(
+                "Looks like this is your first run. Let's set up the servers "
+                "you want to monitor before we get started."
+            )
+            yield Button("Get Started", id="start-btn", variant="primary")
+        yield Footer()
+
+    @on(Button.Pressed, "#start-btn")
+    def start_setup(self) -> None:
+        self.app.push_screen(AddServerScreen())
+
+
+class AddServerScreen(Screen):
+    """Add one server at a time; loops back to itself until user is done."""
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Vertical(id="add-server-box"):
+            yield Label("Server nickname")
+            yield Input(placeholder="e.g. proxmox-01", id="name")
+            yield Label("Host / IP address")
+            yield Input(placeholder="192.168.1.50", id="host")
+            yield Label("Port")
+            yield Input(placeholder="22", value="22", id="port")
+            yield Label("Username")
+            yield Input(placeholder="root", id="username")
+            yield Label("Auth method")
+            yield Select(
+                [("Password", "password"), ("SSH Key", "ssh_key")],
+                value="password",
+                id="auth_method",
+            )
+            yield Label("Password (stored securely in your OS keyring, not this file)")
+            yield Input(placeholder="", password=True, id="password")
+            yield Label("SSH key path (only if using SSH Key auth)")
+            yield Input(placeholder="~/.ssh/id_ed25519", id="ssh_key_path")
+
+            with Horizontal():
+                yield Button("Add Server", id="add-btn", variant="primary")
+                yield Button("Done — Continue", id="done-btn")
+        yield Footer()
+
+    @on(Button.Pressed, "#add-btn")
+    def add_server(self) -> None:
+        cfg_mgr: ConfigManager = self.app.config_manager
+
+        name = self.query_one("#name", Input).value.strip()
+        host = self.query_one("#host", Input).value.strip()
+        port = int(self.query_one("#port", Input).value or "22")
+        username = self.query_one("#username", Input).value.strip() or "root"
+        auth_method = self.query_one("#auth_method", Select).value
+        password = self.query_one("#password", Input).value
+        ssh_key_path = self.query_one("#ssh_key_path", Input).value.strip() or None
+
+        if not name or not host:
+            self.notify("Nickname and host are required.", severity="error")
+            return
+
+        server = ServerConfig(
+            name=name, host=host, port=port, username=username,
+            auth_method=auth_method, ssh_key_path=ssh_key_path,
+        )
+        cfg_mgr.add_server(server, password=password if auth_method == "password" else None)
+
+        self.notify(f"Added '{name}' ({host})")
+        # Clear inputs so user can add another
+        for input_id in ("#name", "#host", "#username", "#password", "#ssh_key_path"):
+            self.query_one(input_id, Input).value = ""
+        self.query_one("#port", Input).value = "22"
+
+    @on(Button.Pressed, "#done-btn")
+    def finish(self) -> None:
+        self.app.push_screen(PollingSettingsScreen())
+
+
+class PollingSettingsScreen(Screen):
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Vertical(id="settings-box"):
+            yield Static("Polling & display settings")
+            yield Label("Polling rate (seconds)")
+            yield Input(value="5", id="polling_rate")
+            yield Label("Theme")
+            yield Select(
+                [("Dark", "textual-dark"), ("Light", "textual-light")],
+                value="textual-dark",
+                id="theme",
+            )
+            yield Button("Finish Setup", id="finish-btn", variant="success")
+        yield Footer()
+
+    @on(Button.Pressed, "#finish-btn")
+    def finish_setup(self) -> None:
+        cfg_mgr: ConfigManager = self.app.config_manager
+
+        print(ConfigManager)
+        rate = int(self.query_one("#polling_rate", Input).value or "5")
+        theme = self.query_one("#theme", Select).value
+
+        cfg_mgr.config.settings = AppSettings(polling_rate_seconds=rate, theme=theme)
+        cfg_mgr.save()
+
+        self.notify("Setup complete!")
+        self.app.pop_screen()  # or push your main Dashboard screen instead

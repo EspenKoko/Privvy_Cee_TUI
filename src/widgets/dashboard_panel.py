@@ -1,14 +1,7 @@
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-
 from textual.app import App, ComposeResult
 from textual.containers import Container, Vertical
 from textual.widgets import Button, Digits, Label, Static
 import random
-
-ROOT_DIR = Path(__file__).resolve().parents[3]
-load_dotenv(ROOT_DIR / ".env")
 
 class DashboardPanel(Vertical):
     CSS = """
@@ -19,9 +12,6 @@ class DashboardPanel(Vertical):
     
     def __init__(self) -> None:
         super().__init__()
-        self.label=os.getenv("METRICS_LABEL", "Temps and stuff")
-        self.api_url = os.getenv("METRICS_API_URL", "https://dummyjson.com/products")
-        self.refresh_seconds = int(os.getenv("METRICS_REFRESH_SECONDS", "6"))
 
     def compose(self) -> ComposeResult:
         with Container():
@@ -45,7 +35,7 @@ class DashboardPanel(Vertical):
             digit.styles.color = "white"
             digit.styles.padding = (1, 1)
 
-        self.set_interval(2.0, self.update_stats)
+        # self.set_interval(2.0, self.update_stats)
         
     def update_stats(self) -> None:
         # Simulate gathering system data
