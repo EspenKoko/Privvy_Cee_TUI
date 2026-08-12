@@ -1,18 +1,32 @@
+import os
 import sys
 from pathlib import Path
 from typing import Optional
 from textual.app import App as TextualApp
 import requests
 
+from dotenv import load_dotenv
+
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+dotenv_path = ROOT_DIR.parent / ".env"
+if dotenv_path.exists():
+    load_dotenv(dotenv_path)
+else:
+    # allow python-dotenv to search parent directories if layout differs
+    load_dotenv()
+
 from services.token_store import TokenStore
-from services.configuration import ConfigManager, ServerConfig, AppSettings
+from services.configuration import ConfigManager
 
+DEFAULT_HOST = os.getenv("PVE_HOST", "127.0.0.1")
 
-class AuthenticateAgainstHost:
+DEFAULT_USER = os.getenv("PVE_USER")
+DEFAULT_PASSWORD = os.getenv("PVE_PASS")
+
+class PVEAuthentivation:
 
     def __init__(self, app: Optional[TextualApp] = None) -> None:
         # Prefer an injected textual App so we reuse its `config_manager`.
@@ -31,16 +45,33 @@ class AuthenticateAgainstHost:
             return self.app.config_manager
         return ConfigManager()
 
-    def fetch_access_ticket(self, username: str, password: str, host: Optional[str] = None, port: int = 8006) -> dict:
+    def fetch_access_ticket(
+        self,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        host: Optional[str] = None,
+    ) -> dict:
         cfg = self.getConfig()
+
         if host is None:
-            conf = cfg.load()
-            if not conf.hosts:
-                raise RuntimeError("No configured hosts found; pass `host` explicitly")
-            host = conf.hosts[0].address
+            # When the file is run directly as a module, default to a known host.
+            # Otherwise, if the app is running normally, use configured hosts.
+            if __name__ == "__main__":
+                host = DEFAULT_HOST
+            else:
+                conf = cfg.load()
+                if not conf.hosts:
+                    raise RuntimeError("No configured hosts found; pass `host` explicitly")
+                host = conf.hosts[0].address
+
+        if username is None:
+            username = DEFAULT_USER
+
+        if password is None:
+            password = DEFAULT_PASSWORD
 
         response = requests.post(
-            f"https://{host}:{port}/api2/json/access/ticket",
+            f"https://{host}:8006/api2/json/access/ticket",
             data={"username": username, "password": password},
             verify=False,
             timeout=15,
@@ -56,8 +87,8 @@ class AuthenticateAgainstHost:
         return TokenStore().get_token()
 
 if __name__ == "__main__":
-    auth = AuthenticateAgainstHost()
-    ticket_data = auth.fetch_access_ticket("Privvy_Cee_User@pve", "Pr1vvyC3380085")
+    auth = PVEAuthentivation()
+    ticket_data = auth.fetch_access_ticket()
     auth.save_access_ticket(ticket_data)
     print("Saved ticket")
     print(auth.get_ticket_value())
