@@ -67,8 +67,8 @@ class ServerConfiguration(Horizontal):
                 yield Static("[b]New Server[/b]", id="edit-pane-title")
                 yield Label("Nickname", classes="field-label")
                 yield Input(placeholder="e.g. proxmox-01", id="edit-name")
-                yield Label("Host / IP address", classes="field-label")
-                yield Input(placeholder="192.168.1.50", id="edit-host")
+                yield Label("Server IP address", classes="field-label")
+                yield Input(placeholder="192.168.1.50", id="edit-address")
                 yield Label("Port", classes="field-label")
                 yield Input(placeholder="22", id="edit-port")
                 yield Label("Username", classes="field-label")
@@ -95,7 +95,7 @@ class ServerConfiguration(Horizontal):
 
     def on_mount(self) -> None:
         table = self.query_one("#server-table", DataTable)
-        table.add_columns("Name", "Host", "Port", "Username", "Auth")
+        table.add_columns("Name", "Address", "Port", "Username", "Auth", "Host")
         self._refresh_table()
         self._clear_edit_form()
 
@@ -103,10 +103,17 @@ class ServerConfiguration(Horizontal):
         table = self.query_one("#server-table", DataTable)
         table.clear()
         cfg_mgr: ConfigManager = self.app.config_manager
+        for server in cfg_mgr.config.hosts:
+            table.add_row(
+                server.name, server.address, str(server.port),
+                server.username, server.auth_method, server.is_hypervisor,
+                key=server.name,
+            )
         for server in cfg_mgr.config.servers:
             table.add_row(
-                server.name, server.host, str(server.port),
-                server.username, server.auth_method, key=server.name,
+                server.name, server.address, str(server.port),
+                server.username, server.auth_method, server.is_hypervisor,
+                key=server.name,
             )
 
     # ---------- Table selection -> populate edit form ----------
@@ -127,7 +134,7 @@ class ServerConfiguration(Horizontal):
         self.editing_server_name = server.name
         self.query_one("#edit-pane-title", Static).update(f"[b]Editing: {server.name}[/b]")
         self.query_one("#edit-name", Input).value = server.name
-        self.query_one("#edit-host", Input).value = server.host
+        self.query_one("#edit-address", Input).value = server.address
         self.query_one("#edit-port", Input).value = str(server.port)
         self.query_one("#edit-username", Input).value = server.username
         self.query_one("#edit-auth-method", Select).value = server.auth_method
@@ -163,7 +170,7 @@ class ServerConfiguration(Horizontal):
         self.editing_server_name = None
         self.query_one("#edit-pane-title", Static).update("[b]New Server[/b]")
         self.query_one("#edit-name", Input).value = ""
-        self.query_one("#edit-host", Input).value = ""
+        self.query_one("#edit-address", Input).value = ""
         self.query_one("#edit-port", Input).value = "22"
         self.query_one("#edit-username", Input).value = "root"
         self.query_one("#edit-auth-method", Select).value = "password"
@@ -179,15 +186,15 @@ class ServerConfiguration(Horizontal):
         cfg_mgr: ConfigManager = self.app.config_manager
 
         name = self.query_one("#edit-name", Input).value.strip()
-        host = self.query_one("#edit-host", Input).value.strip()
+        address = self.query_one("#edit-address", Input).value.strip()
         port_raw = self.query_one("#edit-port", Input).value.strip()
         username = self.query_one("#edit-username", Input).value.strip() or "root"
         auth_method = self.query_one("#edit-auth-method", Select).value
         password = self.query_one("#edit-password", Input).value
         ssh_key_path = self.query_one("#edit-ssh-key-path", Input).value.strip() or None
 
-        if not name or not host:
-            self._set_status("[red]Nickname and host are required.[/red]")
+        if not name or not address:
+            self._set_status("[red]Nickname and server address are required.[/red]")
             return
         try:
             port = int(port_raw) if port_raw else 22
@@ -203,8 +210,12 @@ class ServerConfiguration(Horizontal):
                 self._set_status(f"[red]A server named '{name}' already exists.[/red]")
                 return
             new_server = ServerConfig(
-                name=name, host=host, port=port, username=username,
-                auth_method=auth_method, ssh_key_path=ssh_key_path,
+                name=name,
+                address=address,
+                port=port,
+                username=username,
+                auth_method=auth_method,
+                ssh_key_path=ssh_key_path,
             )
             cfg_mgr.add_server(new_server, password=password if auth_method == "password" else None)
             self._set_status(f"[green]Added '{name}'.[/green]")
@@ -227,7 +238,7 @@ class ServerConfiguration(Horizontal):
                 cfg_mgr.delete_password(old_server)
 
             old_server.name = name
-            old_server.host = host
+            old_server.address = address
             old_server.port = port
             old_server.username = username
             old_server.auth_method = auth_method

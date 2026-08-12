@@ -26,17 +26,57 @@ def _strip_none(obj):
 @dataclass
 class ServerConfig:
     name: str
-    host: str
+    address: str
     port: int = 22
     username: str = "root"
     auth_method: str = "password"  # "password" or "ssh_key"
     ssh_key_path: Optional[str] = None
+    is_hypervisor: bool = False
     # NOTE: no password field here on purpose — that lives in keyring only.
 
     @property
     def credential_key(self) -> str:
         """Unique lookup key for keyring, since keyring is just service+username -> secret."""
         return f"{self.name}:{self.username}"
+
+    @property
+    def host(self) -> str:
+        return self.address
+
+    @host.setter
+    def host(self, value: str) -> None:
+        self.address = value
+
+    @property
+    def isHost(self) -> bool:
+        return self.is_hypervisor
+
+    @isHost.setter
+    def isHost(self, value: bool) -> None:
+        self.is_hypervisor = bool(value)
+
+    @classmethod
+    def from_dict(cls, data: dict, default_is_hypervisor: Optional[bool] = None) -> "ServerConfig":
+        address = data.get("address") or data.get("host")
+        if address is None:
+            raise ValueError("ServerConfig requires an address or host field")
+
+        if default_is_hypervisor is None:
+            is_hypervisor = data.get("is_hypervisor")
+            if is_hypervisor is None:
+                is_hypervisor = data.get("isHost", False)
+        else:
+            is_hypervisor = data.get("is_hypervisor", data.get("isHost", default_is_hypervisor))
+
+        return cls(
+            name=data["name"],
+            address=address,
+            port=data.get("port", 22),
+            username=data.get("username", "root"),
+            auth_method=data.get("auth_method", "password"),
+            ssh_key_path=data.get("ssh_key_path"),
+            is_hypervisor=bool(is_hypervisor),
+        )
 
 
 @dataclass
@@ -48,6 +88,7 @@ class AppSettings:
 
 @dataclass
 class AppConfig:
+    hosts: list[ServerConfig] = field(default_factory=list)
     servers: list[ServerConfig] = field(default_factory=list)
     settings: AppSettings = field(default_factory=AppSettings)
 
@@ -72,15 +113,20 @@ class ConfigManager:
         with open(self.config_path, "rb") as f:
             raw = tomllib.load(f)
 
-        servers = [ServerConfig(**s) for s in raw.get("servers", [])]
+        hypervisor_raw = raw.get("hosts", [])
+        server_raw = raw.get("servers", [])
+
+        hosts = [ServerConfig.from_dict(s, default_is_hypervisor=True) for s in hypervisor_raw]
+        servers = [ServerConfig.from_dict(s, default_is_hypervisor=False) for s in server_raw]
         settings_raw = raw.get("settings", {})
         settings = AppSettings(**settings_raw)
 
-        self.config = AppConfig(servers=servers, settings=settings)
+        self.config = AppConfig(hosts=hosts, servers=servers, settings=settings)
         return self.config
 
     def save(self) -> None:
         data = {
+            "hosts": [asdict(s) for s in self.config.hosts],
             "servers": [asdict(s) for s in self.config.servers],
             "settings": asdict(self.config.settings),
         }
@@ -102,10 +148,14 @@ class ConfigManager:
         except keyring.errors.PasswordDeleteError:
             pass  # already gone, that's fine
 
-    def add_server(self, server: ServerConfig, password: Optional[str] = None) -> None:
-        self.config.servers.append(server)
+    def add_server(self, serverConfig: ServerConfig, password: Optional[str] = None) -> None:
+        if serverConfig.is_hypervisor:
+            self.config.hosts.append(serverConfig)
+        else:
+            self.config.servers.append(serverConfig)
+
         if password:
-            self.set_password(server, password)
+            self.set_password(serverConfig, password)
         self.save()
 
     def remove_server(self, server_name: str) -> None:

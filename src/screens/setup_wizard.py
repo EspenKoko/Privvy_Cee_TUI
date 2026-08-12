@@ -1,11 +1,11 @@
 from textual.screen import Screen
 from textual.containers import Vertical, Horizontal
-from textual.widgets import Header, Footer, Input, Button, Label, Static, Select, DataTable
+from textual.widgets import Header, Footer, Input, Button, Label, Static, Select
 from textual.app import ComposeResult
 from textual import on
 
 from src.services.configuration import ConfigManager, ServerConfig, AppSettings
-
+from src.screens.dashboard import DashboardScreen
 
 class WelcomeScreen(Screen):
     """First screen shown on a fresh install."""
@@ -23,8 +23,75 @@ class WelcomeScreen(Screen):
 
     @on(Button.Pressed, "#start-btn")
     def start_setup(self) -> None:
-        self.app.push_screen(AddServerScreen())
+        self.app.push_screen(AddHostScreen())
 
+
+class AddHostScreen(Screen):
+    """Add a hypervisor host machine."""
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        with Vertical(id="add-host-box"):
+            yield Label("Hypervisor nickname")
+            yield Input(placeholder="e.g. proxmox-01", id="name")
+            yield Label("Hypervisor IP address")
+            yield Input(placeholder="192.168.1.15", id="address")
+            yield Label("Port")
+            yield Input(placeholder="22", value="22", id="port")
+            yield Label("Username")
+            yield Input(placeholder="root", id="username")
+            yield Label("Auth method")
+            yield Select(
+                [("Password", "password"), ("SSH Key", "ssh_key")],
+                value="password",
+                id="auth_method",
+            )
+            yield Label("Password (stored securely in your OS keyring, not this file)")
+            yield Input(placeholder="", password=True, id="password")
+            yield Label("SSH key path (only if using SSH Key auth)")
+            yield Input(placeholder="~/.ssh/id_ed25519", id="ssh_key_path")
+
+            with Horizontal():
+                yield Button("Add Host", id="add-btn", variant="primary")
+                yield Button("Done — Continue", id="done-btn")
+        yield Footer()
+
+    @on(Button.Pressed, "#add-btn")
+    def add_hypervisor(self) -> None:
+        cfg_mgr: ConfigManager = self.app.config_manager
+
+        name = self.query_one("#name", Input).value.strip()
+        address = self.query_one("#address", Input).value.strip()
+        port = int(self.query_one("#port", Input).value or "22")
+        username = self.query_one("#username", Input).value.strip() or "root"
+        auth_method = self.query_one("#auth_method", Select).value
+        password = self.query_one("#password", Input).value
+        ssh_key_path = self.query_one("#ssh_key_path", Input).value.strip() or None
+
+        if not name or not address:
+            self.notify("Nickname and hypervisor address are required.", severity="error")
+            return
+
+        server = ServerConfig(
+            name=name,
+            address=address,
+            port=port,
+            username=username,
+            auth_method=auth_method,
+            ssh_key_path=ssh_key_path,
+            is_hypervisor=True,
+        )
+        cfg_mgr.add_server(server, password=password if auth_method == "password" else None)
+
+        self.notify(f"Added '{name}' ({address})")
+        # Clear inputs so user can add another
+        for input_id in ("#name", "#address", "#username", "#password", "#ssh_key_path"):
+            self.query_one(input_id, Input).value = ""
+        self.query_one("#port", Input).value = "22"
+
+    @on(Button.Pressed, "#done-btn")
+    def finish(self) -> None:
+        self.app.push_screen(AddServerScreen())
 
 class AddServerScreen(Screen):
     """Add one server at a time; loops back to itself until user is done."""
@@ -33,9 +100,9 @@ class AddServerScreen(Screen):
         yield Header()
         with Vertical(id="add-server-box"):
             yield Label("Server nickname")
-            yield Input(placeholder="e.g. proxmox-01", id="name")
-            yield Label("Host / IP address")
-            yield Input(placeholder="192.168.1.50", id="host")
+            yield Input(placeholder="e.g. proxmox-02", id="name")
+            yield Label("Server IP address")
+            yield Input(placeholder="192.168.1.50", id="address")
             yield Label("Port")
             yield Input(placeholder="22", value="22", id="port")
             yield Label("Username")
@@ -61,26 +128,30 @@ class AddServerScreen(Screen):
         cfg_mgr: ConfigManager = self.app.config_manager
 
         name = self.query_one("#name", Input).value.strip()
-        host = self.query_one("#host", Input).value.strip()
+        address = self.query_one("#address", Input).value.strip()
         port = int(self.query_one("#port", Input).value or "22")
         username = self.query_one("#username", Input).value.strip() or "root"
         auth_method = self.query_one("#auth_method", Select).value
         password = self.query_one("#password", Input).value
         ssh_key_path = self.query_one("#ssh_key_path", Input).value.strip() or None
 
-        if not name or not host:
-            self.notify("Nickname and host are required.", severity="error")
+        if not name or not address:
+            self.notify("Nickname and server address are required.", severity="error")
             return
 
         server = ServerConfig(
-            name=name, host=host, port=port, username=username,
-            auth_method=auth_method, ssh_key_path=ssh_key_path,
+            name=name,
+            address=address,
+            port=port,
+            username=username,
+            auth_method=auth_method,
+            ssh_key_path=ssh_key_path,
         )
         cfg_mgr.add_server(server, password=password if auth_method == "password" else None)
 
-        self.notify(f"Added '{name}' ({host})")
+        self.notify(f"Added '{name}' ({address})")
         # Clear inputs so user can add another
-        for input_id in ("#name", "#host", "#username", "#password", "#ssh_key_path"):
+        for input_id in ("#name", "#address", "#username", "#password", "#ssh_key_path"):
             self.query_one(input_id, Input).value = ""
         self.query_one("#port", Input).value = "22"
 
@@ -117,4 +188,5 @@ class PollingSettingsScreen(Screen):
         cfg_mgr.save()
 
         self.notify("Setup complete!")
-        self.app.pop_screen()  # or push your main Dashboard screen instead
+        # self.app.pop_screen()  # or push your main Dashboard screen instead
+        self.app.push_screen(DashboardScreen())
