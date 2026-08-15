@@ -11,7 +11,7 @@ import keyring
 import platformdirs
 
 APP_NAME = "privvy_cee_tui"
-KEYRING_SERVICE = "privvy_cee_tui"  # namespace for all our keyring entries
+KEYRING_SERVICE = "PrivvyCeeTui"  # namespace for all our keyring entries
 
 
 def _strip_none(obj):

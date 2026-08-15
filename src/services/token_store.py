@@ -30,7 +30,7 @@ class TokenStore:
     raise when a fallback encrypt/decrypt is needed.
     """
 
-    SERVICE_NAME = "PrivvyCee"
+    SERVICE_NAME = "PrivvyCeeToken"
     TOKEN_NAME = "api_token"
     FERNET_KEY_NAME = "encryption_key"
     STORAGE_DIR = Path.home() / ".privvycee"

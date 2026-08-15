@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 from textual.app import App as TextualApp
 import requests
+import logging
 
 from dotenv import load_dotenv
 
@@ -20,6 +21,8 @@ else:
 
 from services.token_store import TokenStore
 from services.configuration import ConfigManager
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_HOST = os.getenv("PVE_HOST", "127.0.0.1")
 
@@ -50,6 +53,7 @@ class PVEAuthentivation:
         username: Optional[str] = None,
         password: Optional[str] = None,
         host: Optional[str] = None,
+        verify: Optional[bool] = False,
     ) -> dict:
         cfg = self.getConfig()
 
@@ -70,21 +74,47 @@ class PVEAuthentivation:
         if password is None:
             password = DEFAULT_PASSWORD
 
-        response = requests.post(
-            f"https://{host}:8006/api2/json/access/ticket",
-            data={"username": username, "password": password},
-            verify=False,
-            timeout=15,
-        )
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = requests.post(
+                f"https://{host}:8006/api2/json/access/ticket",
+                data={"username": username, "password": password},
+                verify=verify,
+                timeout=15,
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            logger.exception("Failed to fetch access ticket from %s", host)
+            raise RuntimeError(f"Failed to fetch access ticket from {host}") from e
+
+        content_type = response.headers.get("Content-Type", "")
+        if "application/json" in content_type:
+            try:
+                return response.json()
+            except ValueError as e:
+                logger.exception("Invalid JSON from %s", host)
+                raise RuntimeError("Invalid JSON response from PVE API") from e
+        return response.text
 
     def save_access_ticket(self, ticket_data: dict):
         token = ticket_data.get("data", {}).get("CSRFPreventionToken", "")
+        if not token:
+            logger.warning("No CSRFPreventionToken found in ticket_data")
         TokenStore().save_token(token)
 
     def get_ticket_value(self) -> str:
         return TokenStore().get_token()
+
+    def authenticate(
+        self,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        host: Optional[str] = None,
+        verify: Optional[bool] = False,
+    ):
+        # Use instance methods rather than a global `auth` variable.
+        ticket_data = self.fetch_access_ticket(username=username, password=password, host=host, verify=verify)
+        self.save_access_ticket(ticket_data)
+        return ticket_data
 
 if __name__ == "__main__":
     auth = PVEAuthentivation()

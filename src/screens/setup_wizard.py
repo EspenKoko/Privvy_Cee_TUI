@@ -6,7 +6,7 @@ from textual import on
 
 from src.services.configuration import ConfigManager, ServerConfig, AppSettings
 from src.screens.dashboard import DashboardScreen
-
+from src.api.pve_access_ticket import PVEAuthentivation
 class WelcomeScreen(Screen):
     """First screen shown on a fresh install."""
 
@@ -15,8 +15,7 @@ class WelcomeScreen(Screen):
         with Vertical(id="welcome-box"):
             yield Static("👋 Welcome to Privvy_Cee_TUI", id="welcome-title")
             yield Static(
-                "Looks like this is your first run. Let's set up the servers "
-                "you want to monitor before we get started."
+                "Looks like this is your first run. Let's set up your environemnt "
             )
             yield Button("Get Started", id="start-btn", variant="primary")
         yield Footer()
@@ -53,7 +52,8 @@ class AddHostScreen(Screen):
 
             with Horizontal():
                 yield Button("Add Host", id="add-btn", variant="primary")
-                yield Button("Done — Continue", id="done-btn")
+                # TODO add loding indicator when this button is clicked
+                # yield Button("Done — Continue", id="done-btn")
         yield Footer()
 
     @on(Button.Pressed, "#add-btn")
@@ -81,6 +81,30 @@ class AddHostScreen(Screen):
             ssh_key_path=ssh_key_path,
             is_hypervisor=True,
         )
+        
+        # Authenticate against the host before saving the server.
+        auth = PVEAuthentivation(app=self.app)
+        try:
+            ticket_data = auth.authenticate(username=username, password=password, host=address)
+        except RuntimeError as e:
+            # Inspect original requests exception (if present) for status code.
+            cause = getattr(e, "__cause__", None)
+            resp = getattr(cause, "response", None)
+            status_code = getattr(resp, "status_code", None)
+            if status_code == 401:
+                self.notify("Not authorised: invalid credentials", severity="error")
+            elif status_code == 404:
+                self.notify("Host not found", severity="error")
+            else:
+                self.notify(f"Authentication failed: {e}", severity="error")
+            return
+
+        # Validate ticket_data structure
+        if not isinstance(ticket_data, dict) or not ticket_data.get("data"):
+            self.notify("Authentication failed: unexpected response from host", severity="error")
+            return
+
+        # Success: save server and token (token saved by authenticate/save_access_ticket)
         cfg_mgr.add_server(server, password=password if auth_method == "password" else None)
 
         self.notify(f"Added '{name}' ({address})")
@@ -88,9 +112,6 @@ class AddHostScreen(Screen):
         for input_id in ("#name", "#address", "#username", "#password", "#ssh_key_path"):
             self.query_one(input_id, Input).value = ""
         self.query_one("#port", Input).value = "22"
-
-    @on(Button.Pressed, "#done-btn")
-    def finish(self) -> None:
         self.app.push_screen(AddServerScreen())
 
 class AddServerScreen(Screen):
