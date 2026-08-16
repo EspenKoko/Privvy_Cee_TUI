@@ -96,13 +96,21 @@ class PVEAuthentivation:
         return response.text
 
     def save_access_ticket(self, ticket_data: dict):
-        token = ticket_data.get("data", {}).get("CSRFPreventionToken", "")
-        if not token:
+        CSRFToken = ticket_data.get("data", {}).get("CSRFPreventionToken", "")
+        ticket = ticket_data.get("data", {}).get("ticket", "")
+
+        if not CSRFToken:
             logger.warning("No CSRFPreventionToken found in ticket_data")
-        TokenStore().save_token(token)
+        else:
+            TokenStore().save_ticket_data("CSRFToken", CSRFToken)
+
+        if not ticket:
+            logger.warning("No ticket found in ticket_data")
+        else:
+            TokenStore().save_ticket_data("AccessTicket", ticket)
 
     def get_ticket_value(self) -> str:
-        return TokenStore().get_token()
+        return TokenStore().get_ticket_data()
 
     def authenticate(
         self,

@@ -31,7 +31,6 @@ class TokenStore:
     """
 
     SERVICE_NAME = "PrivvyCeeToken"
-    TOKEN_NAME = "api_token"
     FERNET_KEY_NAME = "encryption_key"
     STORAGE_DIR = Path.home() / ".privvycee"
     TOKEN_FILE = STORAGE_DIR / "token.enc"
@@ -39,10 +38,10 @@ class TokenStore:
     def __init__(self) -> None:
         self.STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
-    def save_token(self, token: str) -> None:
+    def save_ticket_data(self, name: str, token: str) -> None:
         """Save token to keyring; if that fails, write encrypted file."""
         try:
-            keyring.set_password(self.SERVICE_NAME, self.TOKEN_NAME, token)
+            keyring.set_password(self.SERVICE_NAME, name, token)
             return
         except Exception:
             # best-effort fallback
@@ -58,10 +57,10 @@ class TokenStore:
         # enc = f.encrypt(token_b)
         # self.TOKEN_FILE.write_bytes(enc)
 
-    def get_token(self) -> Optional[str]:
+    def get_ticket_data(self, name: str ) -> Optional[str]:
         """Retrieve token from keyring, or decrypt fallback file."""
         try:
-            token = keyring.get_password(self.SERVICE_NAME, self.TOKEN_NAME)
+            token = keyring.get_password(self.SERVICE_NAME, name)
             if token:
                 return token
         except Exception:
@@ -134,7 +133,7 @@ class TokenStore:
 #     # simple demo
 #     s = TokenStore()
 #     print("Saving demo token to keyring...")
-#     s.save_token("my-demo-token-123")
-#     print("Stored token:", s.get_token())
+#     s.save_ticket_data("my-demo-token-123")
+#     print("Stored token:", s.get_ticket_data())
 #     s.delete_token()
-#     print("Deleted token, now:", s.get_token())
+#     print("Deleted token, now:", s.get_ticket_data())

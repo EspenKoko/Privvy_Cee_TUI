@@ -1,6 +1,6 @@
 from textual.screen import Screen
 from textual.containers import Vertical, Horizontal
-from textual.widgets import Header, Footer, Input, Button, Label, Static, Select
+from textual.widgets import Header, Footer, Input, Button, Label, Static, Select, Checkbox
 from textual.app import ComposeResult
 from textual import on
 
@@ -31,8 +31,8 @@ class AddHostScreen(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         with Vertical(id="add-host-box"):
-            yield Label("Hypervisor nickname")
-            yield Input(placeholder="e.g. proxmox-01", id="name")
+            yield Label("Machine nickname")
+            yield Input(placeholder="e.g. Dragon warrior", id="name")
             yield Label("Hypervisor IP address")
             yield Input(placeholder="192.168.1.15", id="address")
             yield Label("Port")
@@ -49,6 +49,7 @@ class AddHostScreen(Screen):
             yield Input(placeholder="", password=True, id="password")
             yield Label("SSH key path (only if using SSH Key auth)")
             yield Input(placeholder="~/.ssh/id_ed25519", id="ssh_key_path")
+            yield Checkbox("Using a host e.g. proxmox", id="hypervisorCheck", value=False)
 
             with Horizontal():
                 yield Button("Add Host", id="add-btn", variant="primary")
@@ -112,7 +113,14 @@ class AddHostScreen(Screen):
         for input_id in ("#name", "#address", "#username", "#password", "#ssh_key_path"):
             self.query_one(input_id, Input).value = ""
         self.query_one("#port", Input).value = "22"
-        self.app.push_screen(AddServerScreen())
+
+        isHypervisor = self.query_one("#hypervisorCheck", Checkbox).value
+        
+        if isHypervisor == True:
+            self.app.push_screen(AddServerScreen())
+        else:
+            self.app.push_screen(PollingSettingsScreen())
+
 
 class AddServerScreen(Screen):
     """Add one server at a time; loops back to itself until user is done."""
