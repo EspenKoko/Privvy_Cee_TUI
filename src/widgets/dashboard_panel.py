@@ -13,8 +13,8 @@ class DashboardPanel(Vertical):
     }
     """
     
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         self._poll_interval = 5
         self._last_poll_time = 0.0
 
@@ -52,7 +52,7 @@ class DashboardPanel(Vertical):
 
         if now - self._last_poll_time >= self._poll_interval:
             self._last_poll_time = now
-            self.update_stats()
+            # self.update_stats()
         
     def update_stats(self) -> None:
         # Simulate gathering system data
@@ -74,13 +74,15 @@ class DashboardPanel(Vertical):
         
     # Apparantly this way of getting config is more robust
     def set_polling_rate(self) -> int:
+        error_code = 2
+        
         cfg_mgr = getattr(self.app, "config_manager", None)
         if cfg_mgr is None:
-            return 2
+            return error_code
 
         settings = getattr(cfg_mgr.config.settings, "polling_rate_seconds", None)
         if settings in (None, 0):
-            return 2
+            return error_code
 
         return int(settings)
                 

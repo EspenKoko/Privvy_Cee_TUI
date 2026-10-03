@@ -63,6 +63,10 @@ textual console
 All server config is saved to C:\Users\espen.koko\AppData\Local\privvy_cee_ui
 and the passwords are saved to windows crednetial manager
 
+# builing the app to an executable
+```python
+python -m PyInstaller --onefile --collect-all textual main.py
+```
 
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ Homelab Dashboard                                   Connected ● 22:14:03     │
@@ -71,13 +75,13 @@ and the passwords are saved to windows crednetial manager
 │ CPU  18% ████░░░░░░░░░░░░                                              8 /16 │
 │ RAM  42% ████████░░░░░░░                                            13 /32GB │
 │ Disk 61% ███████████░░░░                                         610 /1TB    │
-│ Network ↓ 38MB/s ↑ 4MB/s          Uptime 18d 03h      Temp 48°C            │
+│ Network ↓ 38MB/s ↑ 4MB/s          Uptime 18d 03h      Temp 48°C              │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌────────────── Virtual Machines ──────────────────────────────────────────────┐
 │ Name                 Status      CPU     RAM        IP              Uptime   │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│▶ Windows Server      Running      8%     3.4GB      10.0.0.10       14d      │
+│▶ Windows Server      Running      8%     3.4GB      10.0.0.10       14d     │
 │ Ubuntu Docker        Running      2%     900MB      10.0.0.11       22d      │
 │ Home Assistant       Running      5%     2.1GB      10.0.0.15       18d      │
 │ Kali                 Stopped      -       -         -               -        │
@@ -235,3 +239,7 @@ Logs
 
 [INFO] ...
 [INFO] ...
+
+# Contributions
+
+'image: flaticon.com/free-icons/biometric-identification'. This cover has been designed using resources from Flaticon.com

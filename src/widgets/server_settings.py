@@ -64,10 +64,10 @@ class ServerConfiguration(Horizontal):
                     yield Button("Delete Selected", id="delete-btn", variant="error")
 
             with VerticalScroll(id="server-edit-pane"):
-                yield Static("[b]New Server[/b]", id="edit-pane-title")
-                yield Label("Nickname", classes="field-label")
+                yield Static("[b]Manually add New Server[/b]", id="edit-pane-title")
+                yield Label("Host", classes="field-label")
                 yield Input(placeholder="e.g. proxmox-01", id="edit-name")
-                yield Label("Server IP address", classes="field-label")
+                yield Label("Host IP address", classes="field-label")
                 yield Input(placeholder="192.168.1.50", id="edit-address")
                 yield Label("Port", classes="field-label")
                 yield Input(placeholder="22", id="edit-port")
@@ -95,6 +95,7 @@ class ServerConfiguration(Horizontal):
 
     def on_mount(self) -> None:
         table = self.query_one("#server-table", DataTable)
+        # TODO create ways to edit the hosts
         table.add_columns("Name", "Address", "Port", "Username", "Auth", "Host")
         self._refresh_table()
         self._clear_edit_form()

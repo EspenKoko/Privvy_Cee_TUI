@@ -19,8 +19,8 @@ else:
     # allow python-dotenv to search parent directories if layout differs
     load_dotenv()
 
-from services.token_store import TokenStore
-from services.configuration import ConfigManager
+from src.services.token_store import TokenStore
+from src.services.configuration import ConfigManager
 
 logger = logging.getLogger(__name__)
 

@@ -6,6 +6,7 @@ from src.screens.dashboard import DashboardScreen
 from src.services.configuration import ConfigManager
 from src.screens.setup_wizard import WelcomeScreen
 from src.screens.settings import SettingsScreen
+from src.screens.login import LoginScreen
 
 class HomelabApp(App):
     """Main application."""
@@ -18,6 +19,7 @@ class HomelabApp(App):
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("d", "dashboard", "Dashboard"),
+        Binding("t", "open_test", "Login"),
         Binding("r", "refresh", "Refresh"),
         Binding("?", "help", "Help"),
         Binding("ctrl+s", "open_settings", "Settings", tooltip="Shows Server config"),
@@ -56,8 +58,14 @@ class HomelabApp(App):
             
     def action_refresh(self) -> None:
         """Refresh all data."""
-        self.post_message(DashboardScreen.RefreshRequested())
+        if isinstance(self.screen, DashboardScreen):
+            self.screen.refresh_data() # uses the refresh_data() method defined on the active screen if there is one
+        else:
+            self.notify("Open the dashboard to refresh its data.")
 
     def action_help(self) -> None:
         self.notify("Help coming soon!")
         
+    def action_open_test(self) -> None:
+        self.push_screen(LoginScreen())
+        pass
