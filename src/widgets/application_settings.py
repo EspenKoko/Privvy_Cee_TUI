@@ -6,6 +6,7 @@ from textual.app import ComposeResult
 from textual import on
 
 from src.services.configuration import ConfigManager, AppSettings
+from src.widgets.server_panel import ServerPanel
 
 class ApplicationSettings(Vertical):
     
@@ -94,6 +95,9 @@ class ApplicationSettings(Vertical):
             polling_rate_seconds=rate, theme=theme, log_level=log_level,
         )
         cfg_mgr.save()
+        for screen in self.app.screen_stack:
+            for servers_tab in screen.query(ServerPanel):
+                servers_tab.update_polling_interval()
         self._set_status("[green]Application settings saved.[/green]")
 
     def _set_status(self, message: str) -> None:

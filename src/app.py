@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from textual.app import App
 from textual.binding import Binding
 from src.screens.dashboard import DashboardScreen
@@ -11,8 +9,6 @@ from src.screens.login import LoginScreen
 class HomelabApp(App):
     """Main application."""
     
-    CSS_PATH = str(Path(__file__).resolve().parent.joinpath("css", "dashboard.tcss"))
-
     TITLE = "Homelab Dashboard"
     SUB_TITLE = "Proxmox • Docker"
 

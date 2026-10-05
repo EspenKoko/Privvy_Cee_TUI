@@ -17,4 +17,3 @@ Digits {
     background: $boost;
     padding: 1;
 }
-"""

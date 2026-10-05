@@ -5,6 +5,7 @@ import random
 import time
 
 from src.services.configuration import ConfigManager
+from src.services.polling_rate import PollingRateService
 
 class DashboardPanel(Vertical):
     CSS = """
@@ -62,27 +63,9 @@ class DashboardPanel(Vertical):
         # Update the UI components safely
         self.query_one("#cpu_temp", Digits).update(f"CPU Temp: {dummy_temp}°C")
         self.query_one("#status", Digits).update(f"Server Status: {dummy_status}")
-        
-    # def set_polling_rate(self) -> int:
-    #     cfg_mgr: ConfigManager = self.app.config_manager
-    #     settings = cfg_mgr.config.settings.polling_rate_seconds
-        
-    #     if not settings:
-    #         return 2
-    #     else:
-    #         return int(settings)
-        
+
     # Apparantly this way of getting config is more robust
     def set_polling_rate(self) -> int:
-        error_code = 2
-        
         cfg_mgr = getattr(self.app, "config_manager", None)
-        if cfg_mgr is None:
-            return error_code
-
-        settings = getattr(cfg_mgr.config.settings, "polling_rate_seconds", None)
-        if settings in (None, 0):
-            return error_code
-
-        return int(settings)
+        return PollingRateService.get_polling_rate_seconds(cfg_mgr)
                 

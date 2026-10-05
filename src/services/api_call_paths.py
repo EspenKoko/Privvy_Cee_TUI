@@ -17,34 +17,50 @@ class ProxmoxApiPaths:
 		return f"nodes/{node}"
 
 	@staticmethod
-	def shutdown_vm(node: str, vm_id: int | str) -> str:
-		return f"nodes/{node}/qemu/{vm_id}/status/shutdown"
+	def shutdown_ct(node: str, id: int | str) -> str:
+		return f"nodes/{node}/lxc/{id}/status/shutdown"
 
 	@staticmethod
-	def start_vm(node: str, vm_id: int | str) -> str:
-		return f"nodes/{node}/qemu/{vm_id}/status/start"
+	def start_ct(node: str, id: int | str) -> str:
+		return f"nodes/{node}/lxc/{id}/status/start"
 
 	@staticmethod
-	def vm_status(node: str, vm_id: int | str) -> str:
-		return f"nodes/{node}/qemu/{vm_id}/status/current"
+	def ct_status(node: str, id: int | str) -> str:
+		return f"nodes/{node}/lxc/{id}/status/current"
 
 	@staticmethod
-	def reboot_vm(node: str, vm_id: int | str) -> str:
-		return f"nodes/{node}/qemu/{vm_id}/status/reboot"
+	def reboot_ct(node: str, id: int | str) -> str:
+		return f"nodes/{node}/lxc/{id}/status/reboot"
 
 	@staticmethod
-	def lxc(node: str, vm_id: int | str | None = None) -> str:
+	def shutdown_vm(node: str, id: int | str) -> str:
+		return f"nodes/{node}/qemu/{id}/status/shutdown"
+
+	@staticmethod
+	def start_vm(node: str, id: int | str) -> str:
+		return f"nodes/{node}/qemu/{id}/status/start"
+
+	@staticmethod
+	def vm_status(node: str, id: int | str) -> str:
+		return f"nodes/{node}/qemu/{id}/status/current"
+
+	@staticmethod
+	def reboot_vm(node: str, id: int | str) -> str:
+		return f"nodes/{node}/qemu/{id}/status/reboot"
+
+	@staticmethod
+	def lxc(node: str, id: int | str | None = None) -> str:
 		path = f"nodes/{node}/lxc"
-		return path if vm_id is None else f"{path}/{vm_id}"
+		return path if id is None else f"{path}/{id}"
 
 	@staticmethod
-	def qemu(node: str, vm_id: int | str | None = None) -> str:
+	def qemu(node: str, id: int | str | None = None) -> str:
 		path = f"nodes/{node}/qemu"
-		return path if vm_id is None else f"{path}/{vm_id}"
+		return path if id is None else f"{path}/{id}"
 
 	@staticmethod
-	def qemu_networking(node: str, vm_id: int | str | None = None) -> str:
-		return f"nodes/{node}/qemu/{vm_id}/agent/network-get-interfaces"
+	def qemu_networking(node: str, id: int | str | None = None) -> str:
+		return f"nodes/{node}/qemu/{id}/agent/network-get-interfaces"
 
 	@staticmethod
 	def zfs_scan(node: str) -> str:
@@ -67,5 +83,5 @@ class ProxmoxApiPaths:
 		return f"nodes/{node}/disks/lvm"
 
 	@staticmethod
-	def qemu_monitor(node: str, vm_id: int | str) -> str:
-		return f"nodes/{node}/qemu/{vm_id}/monitor"
+	def qemu_monitor(node: str, id: int | str) -> str:
+		return f"nodes/{node}/qemu/{id}/monitor"

@@ -1,14 +1,15 @@
+from pathlib import Path
 from textual.message import Message
 from textual.screen import Screen
 from textual.widgets import Header, Footer
-from textual.containers import VerticalScroll
+from textual.containers import Container, Vertical
 
 from src.widgets.host_Panel import HostPanel
 from src.widgets.server_panel import ServerPanel
 from src.widgets.dashboard_panel import DashboardPanel
-from src.widgets.server_panel_v2 import ServersTab
 
 class DashboardScreen(Screen):
+    CSS_PATH = str(Path(__file__).resolve().parents[1] / "css" / "dashboard.tcss")
 
     class RefreshRequested(Message):
         """Request all dashboard panels to reload their data."""
@@ -24,10 +25,9 @@ class DashboardScreen(Screen):
 
     def compose(self):
         yield Header(show_clock=True)
-        with VerticalScroll():
+        with Vertical():
             yield DashboardPanel(id="dashboard-panel")
             yield HostPanel(id="host-panel")
-            # yield ServerPanel(id="server-panel")
-            yield ServersTab()
-            # yield LoginScreen(id="login-panel-2")
+            with Container(id="server-panel-container"):
+                yield ServerPanel(id="server-panel")
         yield Footer()
