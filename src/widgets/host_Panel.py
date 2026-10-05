@@ -3,15 +3,16 @@ from pathlib import Path
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
 from textual.widgets import ProgressBar, Label, Static
-import psutil
-import time
+
+from src.api.pve_api_service import CallProxmox
+from src.services.api_call_paths import ProxmoxApiPaths
 
 class HostPanel(Vertical):
     _css_path = Path(__file__).resolve().parents[1] / "css" / "host_panel.tcss"
     DEFAULT_CSS = _css_path.read_text(encoding="utf-8")
     
     def compose(self) -> ComposeResult:
-        yield Label("HOST: Proxmox-01", classes="host-label")
+        yield Label("HOST: <hostname>", id="host-label", classes="host-label")
         with Vertical(id="metrics"):
             with Horizontal(classes="metric"):
                 yield Label("CPU", classes="labels")
@@ -26,48 +27,92 @@ class HostPanel(Vertical):
                 yield ProgressBar(id="disk_bar", total=100, classes="progress-bar")
                 
             with Horizontal(classes="metric"):
-                yield Label("Network", classes="labels")
-                yield Static(id="net_stats")
-                
-            with Horizontal(classes="metric"):
                 yield Label("Uptime", classes="labels")
                 yield Static(id="extra_stats")
 
     def on_mount(self) -> None:
-        self._last_net = psutil.net_io_counters()
+        self.refresh_stats()
         self.set_interval(1.0, self.refresh_stats)
 
     def refresh_stats(self) -> None:
         self.run_worker(self.poll_metrics, exclusive=True, thread=True)
 
     def poll_metrics(self) -> None:
-        cpu = psutil.cpu_percent(interval=None)
-        ram = psutil.virtual_memory()
-        disk = psutil.disk_usage("/")
-        net = psutil.net_io_counters()
-        down_bytes = net.bytes_recv - self._last_net.bytes_recv
-        up_bytes = net.bytes_sent - self._last_net.bytes_sent
-        self._last_net = net
-        
-        self.query_one("#cpu_bar", ProgressBar).update(progress=cpu)
-        self.query_one("#ram_bar", ProgressBar).update(progress=ram.percent)
-        self.query_one("#disk_bar", ProgressBar).update(progress=disk.percent)
-        
-        def format_speed(bytes_per_sec: float) -> str:
-            kb = bytes_per_sec / 1024
-            if kb < 1024:
-                return f"{kb:.0f}KB/s"
-            return f"{kb/1024:.1f}MB/s"
+        config_manager = getattr(self.app, "config_manager", None)
+        if config_manager is None:
+            self.app.call_from_thread(
+                self._show_api_error, "No configuration manager is available."
+            )
+            return
 
-        self.query_one("#net_stats", Static).update(
-            f"[green]↓ {format_speed(down_bytes)}[/] [orange1]↑ {format_speed(up_bytes)}[/]"
+        try:
+            hosts = config_manager.load().hosts
+            if not hosts:
+                self.app.call_from_thread(
+                    self._show_api_error, "No Proxmox hosts are configured."
+                )
+                return
+
+            api = CallProxmox(app=self.app)
+            last_error = None
+            for host in hosts:
+                try:
+                    response = api.call_proxmox(
+                        ProxmoxApiPaths.nodes(), host=host.address
+                    )
+                except RuntimeError as error:
+                    last_error = str(error)
+                    continue
+
+                nodes = response.get("data", []) if isinstance(response, dict) else []
+                node = next(
+                    (
+                        item
+                        for item in nodes
+                        if isinstance(item, dict)
+                        and (
+                            item.get("node") == host.name
+                            or item.get("id") == f"node/{host.name}"
+                        )
+                    ),
+                    None,
+                )
+                if node is not None:
+                    self.app.call_from_thread(self._update_metrics, node, host.name)
+                    return
+
+            message = last_error or "No API node matched a configured host."
+            self.app.call_from_thread(self._show_api_error, message)
+        except (OSError, ValueError, RuntimeError) as error:
+            self.app.call_from_thread(self._show_api_error, str(error))
+
+    def _update_metrics(self, node: dict, configured_name: str) -> None:
+        def percentage(value_name: str, maximum_name: str) -> float:
+            maximum = float(node.get(maximum_name) or 0)
+            if maximum <= 0:
+                return 0
+            value = float(node.get(value_name) or 0)
+            return max(0, min(100, value / maximum * 100))
+
+        cpu_percent = max(0, min(100, float(node.get("cpu") or 0) * 100))
+        self.query_one("#host-label", Label).update(f"HOST: {configured_name}")
+        self.query_one("#cpu_bar", ProgressBar).update(progress=cpu_percent)
+        self.query_one("#ram_bar", ProgressBar).update(
+            progress=percentage("mem", "maxmem")
         )
-
-        uptime_seconds = time.time() - psutil.boot_time()
-        days = int(uptime_seconds // 86400)
-        hours = int((uptime_seconds % 86400) // 3600)
-
-        self.query_one("#extra_stats", Static).update(
-            f"{days}d {hours:02d}h"
+        self.query_one("#disk_bar", ProgressBar).update(
+            progress=percentage("disk", "maxdisk")
         )
+        # self.query_one("#net_stats", Static).update(
+        #     "Unavailable from the /nodes endpoint"
+        # )
+
+        uptime_seconds = int(node.get("uptime") or 0)
+        days, remainder = divmod(uptime_seconds, 86400)
+        hours = remainder // 3600
+        self.query_one("#extra_stats", Static).update(f"{days}d {hours:02d}h")
+
+    def _show_api_error(self, message: str) -> None:
+        self.query_one("#host-label", Label).update("HOST: API unavailable")
+        self.query_one("#net_stats", Static).update(f"[red]{message}[/red]")
         

@@ -1,5 +1,15 @@
-#host-panel {
-    width: 50%;
+#dashboard-content {
+    width: 100%;
+    height: 1fr;
+}
+
+#host-summary-row {
+    height: auto;
+}
+
+#host-panel,
+#host-panel-details {
+    width: 1fr;
     border: round $accent;
     color: white;
     padding: 1 2;
@@ -9,9 +19,15 @@
 
 #server-panel-container {
     width: 100%;
-    height: 2fr;
+    height: 1fr;
+    min-height: 8;
     align: center top;
     border: round $accent;
     padding: 1;
     margin: 1;
+}
+
+#server-panel {
+    width: 100%;
+    height: 1fr;
 }

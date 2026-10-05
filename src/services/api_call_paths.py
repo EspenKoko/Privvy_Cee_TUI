@@ -13,8 +13,16 @@ class ProxmoxApiPaths:
 	CLUSTER = "cluster"
 
 	@staticmethod
-	def node(node: str) -> str:
-		return f"nodes/{node}"
+	def nodes() -> str:
+		return f"nodes"
+
+	@staticmethod
+	def node_network(node: str) -> str:
+		return f"nodes/{node}/network"
+
+	@staticmethod
+	def node_status(node: str) -> str:
+		return f"nodes/{node}/status"
 
 	@staticmethod
 	def shutdown_ct(node: str, id: int | str) -> str:

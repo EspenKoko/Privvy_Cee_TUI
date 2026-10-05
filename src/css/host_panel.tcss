@@ -3,16 +3,22 @@
     margin: 0 0 1 0;
 }
 
-#metrics .metric {
+#metrics .metric,
+#host-details-metrics .metric {
     height: auto;
 }
 
-#metrics .labels {
+#metrics .labels,
+#host-details-metrics .labels {
     width: 10;
     height: 1;
 }
 
 #metrics .progress-bar {
-    width: 50;
-    min-width: 50;
+    width: auto;
+}
+
+#host-details-metrics Static {
+    width: 1fr;
+    height: auto;
 }
