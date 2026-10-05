@@ -15,7 +15,7 @@ class HomelabApp(App):
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("d", "dashboard", "Dashboard"),
-        Binding("t", "open_test", "Login"),
+        # Binding("t", "open_test", "Login"),
         Binding("r", "refresh", "Refresh"),
         Binding("?", "help", "Help"),
         Binding("ctrl+s", "open_settings", "Settings", tooltip="Shows Server config"),
@@ -62,6 +62,6 @@ class HomelabApp(App):
     def action_help(self) -> None:
         self.notify("Help coming soon!")
         
-    def action_open_test(self) -> None:
-        self.push_screen(LoginScreen())
-        pass
+    # def action_open_test(self) -> None:
+    #     self.push_screen(LoginScreen())
+    #     pass

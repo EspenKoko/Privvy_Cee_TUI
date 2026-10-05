@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical
 from textual.widgets import Digits
@@ -8,11 +10,8 @@ from src.services.configuration import ConfigManager
 from src.services.polling_rate import PollingRateService
 
 class DashboardPanel(Vertical):
-    CSS = """
-    DashboardPanel {
-        height: auto;
-    }
-    """
+    _css_path = Path(__file__).resolve().parents[1] / "css" / "dashboard_panel.tcss"
+    DEFAULT_CSS = _css_path.read_text(encoding="utf-8")
     
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -28,18 +27,18 @@ class DashboardPanel(Vertical):
         # self.styles.padding = (1, 2)
         # self.styles.height = "auto"
 
-        container = self.query_one(Container)
-        container.styles.layout = "vertical"
-        container.styles.align = ("left", "top")
-        container.styles.padding = (1, 2)
+        # container = self.query_one(Container)
+        # container.styles.layout = "vertical"
+        # container.styles.align = ("left", "top")
+        # container.styles.padding = (1, 2)
 
-        for widget_id in ("cpu_temp", "status"):
-            digit = self.query_one(f"#{widget_id}", Digits)
-            digit.styles.text_align = "center"
-            digit.styles.margin = (1, 0)
-            digit.styles.background = "gray"
-            digit.styles.color = "white"
-            digit.styles.padding = (1, 1)
+        # for widget_id in ("cpu_temp", "status"):
+        #     digit = self.query_one(f"#{widget_id}", Digits)
+        #     digit.styles.text_align = "center"
+        #     digit.styles.margin = (1, 0)
+        #     digit.styles.background = "gray"
+        #     digit.styles.color = "white"
+        #     digit.styles.padding = (1, 1)
 
         self._poll_interval = self.set_polling_rate()
         self._last_poll_time = time.monotonic()

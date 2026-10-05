@@ -1,19 +1,14 @@
 Container {
-    layout: vertical;
-    align: left top;
-    height: 100%;
-    padding: 1 2;
+	layout: vertical;
+	align: left top;
+	padding: 1 2;
 }
 
-ToggleMetrics {
-    width: auto;
-    margin-top: 2;
-    align: left middle;
-}
-
-Digits {
-    text-align: center;
-    margin: 1;
-    background: $boost;
-    padding: 1;
+#cpu_temp,
+#status {
+	text-align: center;
+	margin: 1 0;
+	background: $accent;
+	color: black;
+	padding: 1 1;
 }

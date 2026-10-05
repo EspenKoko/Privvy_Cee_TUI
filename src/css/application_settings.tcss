@@ -1,0 +1,26 @@
+#app-settings-pane {
+    border: solid $primary;
+    padding: 1;
+    height: auto;
+}
+
+DataTable {
+    height: 1fr;
+}
+
+.field-label {
+    margin-top: 1;
+}
+
+.button-row {
+    margin-top: 1;
+    height: auto;
+}
+
+.button-row Button {
+}
+
+#status-line {
+    height: auto;
+    margin-top: 1;
+}

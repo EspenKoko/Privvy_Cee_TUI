@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from textual.containers import Horizontal, VerticalScroll
 from textual.widgets import Static, DataTable, Input, Label, Button, Select
 from textual.app import ComposeResult
@@ -7,52 +9,8 @@ from src.services.configuration import ConfigManager, ServerConfig, AppSettings
 
 class ServerConfiguration(Horizontal):
     
-    DEFAULT_CSS = """
-    #settings-body {
-        layout: horizontal;
-        height: 1fr;
-    }
-
-    #server-list-pane {
-        width: 45%;
-        border: solid $primary;
-        padding: 1;
-    }
-
-    #server-edit-pane {
-        width: 55%;
-        border: solid $secondary;
-        padding: 1;
-    }
-
-    #app-settings-pane {
-        border: solid $accent;
-        padding: 1;
-        height: auto;
-    }
-
-    DataTable {
-        height: 1fr;
-    }
-
-    .field-label {
-        margin-top: 1;
-    }
-
-    .button-row {
-        margin-top: 1;
-        height: auto;
-    }
-
-    .button-row Button {
-        margin-right: 1;
-    }
-
-    #status-line {
-        height: auto;
-        margin-top: 1;
-    }
-    """
+    _css_path = Path(__file__).resolve().parents[1] / "css" / "server_configuration.tcss"
+    DEFAULT_CSS = _css_path.read_text(encoding="utf-8")
         
     def compose(self) -> ComposeResult:
         with Horizontal(id="settings-body"):

@@ -1,0 +1,18 @@
+.host-label {
+    text-style: bold;
+    margin: 0 0 1 0;
+}
+
+#metrics .metric {
+    height: auto;
+}
+
+#metrics .labels {
+    width: 10;
+    height: 1;
+}
+
+#metrics .progress-bar {
+    width: 50;
+    min-width: 50;
+}

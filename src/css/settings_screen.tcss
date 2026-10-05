@@ -1,0 +1,3 @@
+SettingsScreen {
+    layout: vertical;
+}

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from textual.screen import Screen
 from textual.widgets import Header, Footer
 from textual.app import ComposeResult
@@ -18,18 +20,13 @@ class SettingsScreen(Screen):
         ("escape", "app.pop_screen", "Back"),
     ]
 
-    DEFAULT_CSS = """
-    SettingsScreen {
-        layout: vertical;
-    }
-    """
+    CSS_PATH = str(Path(__file__).resolve().parents[1] / "css" / "settings_screen.tcss")
     
     def compose(self) -> ComposeResult:
         yield Header()
         with TabbedContent(id="settings-tabs"):
             with TabPane("Servers", id="tab-servers"):
                 yield ServerConfiguration()
-                        
             with TabPane("App Settings", id="tab-app-settings"):
                 yield ApplicationSettings()
 

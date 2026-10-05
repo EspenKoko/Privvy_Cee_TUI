@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from textual.containers import Vertical, Horizontal
@@ -9,36 +10,8 @@ from src.services.configuration import ConfigManager, AppSettings
 from src.widgets.server_panel import ServerPanel
 
 class ApplicationSettings(Vertical):
-    
-    DEFAULT_CSS = """
-    #app-settings-pane {
-        border: solid $accent;
-        padding: 1;
-        height: auto;
-    }
-
-    DataTable {
-        height: 1fr;
-    }
-
-    .field-label {
-        margin-top: 1;
-    }
-
-    .button-row {
-        margin-top: 1;
-        height: auto;
-    }
-
-    .button-row Button {
-        margin-right: 1;
-    }
-    
-    #status-line {
-        height: auto;
-        margin-top: 1;
-    }
-    """
+    _css_path = Path(__file__).resolve().parents[1] / "css" / "application_settings.tcss"
+    DEFAULT_CSS = _css_path.read_text(encoding="utf-8")
     
     def __init__(self) -> None:
         super().__init__()
