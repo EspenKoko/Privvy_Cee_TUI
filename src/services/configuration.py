@@ -1,5 +1,4 @@
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Optional
 try:
@@ -10,8 +9,10 @@ import tomli_w
 import keyring
 import platformdirs
 
+from models.configuration_type import ServerConfig, AppConfig, AppSettings
+
 APP_NAME = "privvy_cee_tui"
-KEYRING_SERVICE = "privvy_cee_tui"  # namespace for all our keyring entries
+KEYRING_SERVICE = "PrivvyCeeTui"  # namespace for all our keyring entries
 
 
 def _strip_none(obj):
@@ -21,35 +22,6 @@ def _strip_none(obj):
     if isinstance(obj, list):
         return [_strip_none(v) for v in obj]
     return obj
-
-
-@dataclass
-class ServerConfig:
-    name: str
-    host: str
-    port: int = 22
-    username: str = "root"
-    auth_method: str = "password"  # "password" or "ssh_key"
-    ssh_key_path: Optional[str] = None
-    # NOTE: no password field here on purpose — that lives in keyring only.
-
-    @property
-    def credential_key(self) -> str:
-        """Unique lookup key for keyring, since keyring is just service+username -> secret."""
-        return f"{self.name}:{self.username}"
-
-
-@dataclass
-class AppSettings:
-    polling_rate_seconds: int = 5
-    theme: str = "textual-dark"
-    log_level: str = "INFO"
-
-
-@dataclass
-class AppConfig:
-    servers: list[ServerConfig] = field(default_factory=list)
-    settings: AppSettings = field(default_factory=AppSettings)
 
 
 class ConfigManager:
@@ -72,17 +44,22 @@ class ConfigManager:
         with open(self.config_path, "rb") as f:
             raw = tomllib.load(f)
 
-        servers = [ServerConfig(**s) for s in raw.get("servers", [])]
+        hypervisor_raw = raw.get("hosts", [])
+        server_raw = raw.get("servers", [])
+
+        hosts = [ServerConfig.from_dict(s, default_is_hypervisor=True) for s in hypervisor_raw]
+        servers = [ServerConfig.from_dict(s, default_is_hypervisor=False) for s in server_raw]
         settings_raw = raw.get("settings", {})
         settings = AppSettings(**settings_raw)
 
-        self.config = AppConfig(servers=servers, settings=settings)
+        self.config = AppConfig(hosts=hosts, servers=servers, settings=settings)
         return self.config
 
     def save(self) -> None:
         data = {
-            "servers": [asdict(s) for s in self.config.servers],
-            "settings": asdict(self.config.settings),
+            "hosts": [s.model_dump(mode="python") for s in self.config.hosts],
+            "servers": [s.model_dump(mode="python") for s in self.config.servers],
+            "settings": self.config.settings.model_dump(mode="python"),
         }
         data = _strip_none(data)  # drop None fields before writing, since TOML has no null
         with open(self.config_path, "wb") as f:
@@ -102,10 +79,14 @@ class ConfigManager:
         except keyring.errors.PasswordDeleteError:
             pass  # already gone, that's fine
 
-    def add_server(self, server: ServerConfig, password: Optional[str] = None) -> None:
-        self.config.servers.append(server)
+    def add_server(self, serverConfig: ServerConfig, password: Optional[str] = None) -> None:
+        if serverConfig.is_hypervisor:
+            self.config.hosts.append(serverConfig)
+        else:
+            self.config.servers.append(serverConfig)
+
         if password:
-            self.set_password(server, password)
+            self.set_password(serverConfig, password)
         self.save()
 
     def remove_server(self, server_name: str) -> None:

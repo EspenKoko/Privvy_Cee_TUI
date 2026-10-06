@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional
 
 from textual.containers import Vertical, Horizontal
@@ -6,38 +7,11 @@ from textual.app import ComposeResult
 from textual import on
 
 from src.services.configuration import ConfigManager, AppSettings
+from src.widgets.server_panel import ServerPanel
 
 class ApplicationSettings(Vertical):
-    
-    DEFAULT_CSS = """
-    #app-settings-pane {
-        border: solid $accent;
-        padding: 1;
-        height: auto;
-    }
-
-    DataTable {
-        height: 1fr;
-    }
-
-    .field-label {
-        margin-top: 1;
-    }
-
-    .button-row {
-        margin-top: 1;
-        height: auto;
-    }
-
-    .button-row Button {
-        margin-right: 1;
-    }
-    
-    #status-line {
-        height: auto;
-        margin-top: 1;
-    }
-    """
+    _css_path = Path(__file__).resolve().parents[1] / "css" / "application_settings.tcss"
+    DEFAULT_CSS = _css_path.read_text(encoding="utf-8")
     
     def __init__(self) -> None:
         super().__init__()
@@ -94,6 +68,9 @@ class ApplicationSettings(Vertical):
             polling_rate_seconds=rate, theme=theme, log_level=log_level,
         )
         cfg_mgr.save()
+        for screen in self.app.screen_stack:
+            for servers_tab in screen.query(ServerPanel):
+                servers_tab.update_polling_interval()
         self._set_status("[green]Application settings saved.[/green]")
 
     def _set_status(self, message: str) -> None:

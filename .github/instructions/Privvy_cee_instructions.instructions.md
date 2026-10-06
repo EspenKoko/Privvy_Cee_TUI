@@ -11,3 +11,5 @@ This project provides users with a interactive interface in the terminal (TUI) t
 
 On the page for each services will be an updates notifications showing how many packages and what packages need to be updates 
 
+Tools:
+this application can work for proxmox and soon other linux environments

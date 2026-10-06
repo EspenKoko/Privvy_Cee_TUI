@@ -1,0 +1,679 @@
+{
+  "info": {
+    "name": "Proxmox",
+    "description": "",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "bruno",
+      "event": []
+    },
+    {
+      "name": "Get Ticket",
+      "event": [],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "auth": null,
+        "description": "",
+        "url": {
+          "raw": "{{host}}:8006/api2/json/access/ticket",
+          "protocol": "",
+          "host": [
+            "{{host}}:8006"
+          ],
+          "path": [
+            "api2",
+            "json",
+            "access",
+            "ticket"
+          ],
+          "query": [],
+          "variable": []
+        },
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "Privvy_Cee_User@pve",
+              "disabled": false,
+              "type": "default"
+            },
+            {
+              "key": "password",
+              "value": "Pr1vvyC3380085",
+              "disabled": false,
+              "type": "default"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Nodes",
+      "item": [
+        {
+          "name": "Shutdown VM",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/qemu/{{VM_ID}}/status/shutdown",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "qemu",
+                "{{VM_ID}}",
+                "status",
+                "shutdown"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Start VM",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/qemu/{{VM_ID}}/status/start",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "qemu",
+                "{{VM_ID}}",
+                "status",
+                "start"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Status of VM",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/qemu/{{VM_ID}}/status/shutdown",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "qemu",
+                "{{VM_ID}}",
+                "status",
+                "shutdown"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Reboot VM",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/qemu/{{VM_ID}}/status/reboot",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "qemu",
+                "{{VM_ID}}",
+                "status",
+                "reboot"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Get Nodes",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Get LXC",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/lxc/517",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "lxc",
+                "517"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Get Qemu",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/qemu/",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "qemu",
+                ""
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Get ZFS Scan list",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/scan/zfs",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "scan",
+                "zfs"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Get pbs list",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/scan/pbs",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "scan",
+                "pbs"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Get ZFS Disk List",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/disks/zfs",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "disks",
+                "zfs"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Get Disk Directory",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/disks/directory",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "disks",
+                "directory"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Get Disk LVM",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/disks/directory",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "disks",
+                "directory"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Qemu Monitor",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "{{host}}:8006/api2/json/nodes/{{node}}/qemu/1828911/monitor",
+              "protocol": "",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "nodes",
+                "{{node}}",
+                "qemu",
+                "1828911",
+                "monitor"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Storage",
+      "item": [
+        {
+          "name": "Get Storage",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "https://{{host}}:8006/api2/json/storage",
+              "protocol": "https",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "storage"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pools",
+      "item": [
+        {
+          "name": "Get Pools",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "https://{{host}}:8006/api2/json/pools",
+              "protocol": "https",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "pools"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Version",
+      "event": [],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+            "disabled": false,
+            "type": "default"
+          }
+        ],
+        "auth": null,
+        "description": "",
+        "url": {
+          "raw": "{{host}}:8006/api2/json/version",
+          "protocol": "",
+          "host": [
+            "{{host}}:8006"
+          ],
+          "path": [
+            "api2",
+            "json",
+            "version"
+          ],
+          "query": [],
+          "variable": []
+        }
+      }
+    },
+    {
+      "name": "Cluster",
+      "item": [
+        {
+          "name": "Get Cluster",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "PVEAPIToken={{user_realm}}!{{token_id}}={{secret}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": null,
+            "description": "",
+            "url": {
+              "raw": "https://{{host}}:8006/api2/json/cluster",
+              "protocol": "https",
+              "host": [
+                "{{host}}:8006"
+              ],
+              "path": [
+                "api2",
+                "json",
+                "cluster"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "host",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "node",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "VM_ID",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "user_realm",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "token_id",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "secret",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical
 from textual.widgets import Digits
@@ -5,16 +7,14 @@ import random
 import time
 
 from src.services.configuration import ConfigManager
+from src.services.polling_rate import PollingRateService
 
 class DashboardPanel(Vertical):
-    CSS = """
-    DashboardPanel {
-        height: auto;
-    }
-    """
+    _css_path = Path(__file__).resolve().parents[1] / "css" / "dashboard_panel.tcss"
+    DEFAULT_CSS = _css_path.read_text(encoding="utf-8")
     
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         self._poll_interval = 5
         self._last_poll_time = 0.0
 
@@ -27,18 +27,18 @@ class DashboardPanel(Vertical):
         # self.styles.padding = (1, 2)
         # self.styles.height = "auto"
 
-        container = self.query_one(Container)
-        container.styles.layout = "vertical"
-        container.styles.align = ("left", "top")
-        container.styles.padding = (1, 2)
+        # container = self.query_one(Container)
+        # container.styles.layout = "vertical"
+        # container.styles.align = ("left", "top")
+        # container.styles.padding = (1, 2)
 
-        for widget_id in ("cpu_temp", "status"):
-            digit = self.query_one(f"#{widget_id}", Digits)
-            digit.styles.text_align = "center"
-            digit.styles.margin = (1, 0)
-            digit.styles.background = "gray"
-            digit.styles.color = "white"
-            digit.styles.padding = (1, 1)
+        # for widget_id in ("cpu_temp", "status"):
+        #     digit = self.query_one(f"#{widget_id}", Digits)
+        #     digit.styles.text_align = "center"
+        #     digit.styles.margin = (1, 0)
+        #     digit.styles.background = "gray"
+        #     digit.styles.color = "white"
+        #     digit.styles.padding = (1, 1)
 
         self._poll_interval = self.set_polling_rate()
         self._last_poll_time = time.monotonic()
@@ -52,7 +52,7 @@ class DashboardPanel(Vertical):
 
         if now - self._last_poll_time >= self._poll_interval:
             self._last_poll_time = now
-            self.update_stats()
+            # self.update_stats()
         
     def update_stats(self) -> None:
         # Simulate gathering system data
@@ -62,25 +62,9 @@ class DashboardPanel(Vertical):
         # Update the UI components safely
         self.query_one("#cpu_temp", Digits).update(f"CPU Temp: {dummy_temp}°C")
         self.query_one("#status", Digits).update(f"Server Status: {dummy_status}")
-        
-    # def set_polling_rate(self) -> int:
-    #     cfg_mgr: ConfigManager = self.app.config_manager
-    #     settings = cfg_mgr.config.settings.polling_rate_seconds
-        
-    #     if not settings:
-    #         return 2
-    #     else:
-    #         return int(settings)
-        
+
     # Apparantly this way of getting config is more robust
     def set_polling_rate(self) -> int:
         cfg_mgr = getattr(self.app, "config_manager", None)
-        if cfg_mgr is None:
-            return 2
-
-        settings = getattr(cfg_mgr.config.settings, "polling_rate_seconds", None)
-        if settings in (None, 0):
-            return 2
-
-        return int(settings)
+        return PollingRateService.get_polling_rate_seconds(cfg_mgr)
                 

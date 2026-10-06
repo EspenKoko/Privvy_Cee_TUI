@@ -1,0 +1,44 @@
+#settings-body {
+    layout: horizontal;
+    height: 1fr;
+}
+
+#server-list-pane {
+    width: 55%;
+    border: solid $primary;
+    padding: 1;
+}
+
+#server-edit-pane {
+    width: 45%;
+    border: solid $secondary;
+    padding: 1;
+}
+
+#app-settings-pane {
+    border: solid $accent;
+    padding: 1;
+    height: auto;
+}
+
+DataTable {
+    height: 1fr;
+}
+
+.field-label {
+    margin-top: 1;
+}
+
+.button-row {
+    margin-top: 1;
+    height: auto;
+}
+
+.button-row Button {
+    margin-right: 1;
+}
+
+#status-line {
+    height: auto;
+    margin-top: 1;
+}
