@@ -1,0 +1,22 @@
+WelcomeScreen {
+    align: center middle;
+}
+
+#card {
+    width: 64;
+    height: auto;
+    border: round green;
+    padding: 1 2;
+}
+
+#welcome-title {
+    text-style: bold;
+    content-align: center middle;
+    width: 100%;
+    margin: 1;
+}
+
+#start-btn {
+    width: 100%;
+    margin-top: 1;
+}

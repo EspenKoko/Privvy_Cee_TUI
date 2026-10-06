@@ -1,0 +1,100 @@
+AddHostScreen {
+}
+
+#add-host-container {
+    width: 100%;
+    height: 1fr;
+    align: center middle;
+}
+
+#add-server-container,
+#polling-settings-container {
+    width: 100%;
+    height: 1fr;
+    align: center middle;
+}
+
+#add-host-content {
+    width: 70%;
+    min-width: 40;
+    max-width: 72;
+    height: 90%;
+}
+
+#add-server-content,
+#polling-settings-content {
+    width: 70%;
+    min-width: 40;
+    max-width: 72;
+    height: 90%;
+}
+
+#add-host-title {
+    width: 100%;
+    height: 3;
+    margin-bottom: 1;
+    border-bottom: heavy $success;
+    color: $success;
+    text-style: bold;
+    content-align: center middle;
+}
+
+#add-server-title,
+#polling-settings-title {
+    width: 100%;
+    height: 3;
+    margin-bottom: 1;
+    border-bottom: heavy $success;
+    color: $success;
+    text-style: bold;
+    content-align: center middle;
+}
+
+#add-host-box {
+    width: 100%;
+    height: 1fr;
+    border: round $success;
+    padding: 0 2;
+}
+
+#add-server-box,
+#settings-box {
+    width: 100%;
+    height: 1fr;
+    border: round $success;
+    padding: 0 2 2 2;
+}
+
+#add-host-box Label {
+    margin-left: 2;
+    margin-top: 1;
+}
+
+#add-server-box Label,
+#settings-box Label {
+    margin-left: 2;
+    margin-top: 1;
+}
+
+#add-host-box Input,
+#add-host-box Select,
+#add-server-box Input,
+#add-server-box Select,
+#settings-box Input,
+#settings-box Select {
+    width: 100%;
+}
+
+#hypervisorCheck {
+    margin-top: 1;
+}
+
+#add-btn {
+    margin: 1;
+}
+
+#done-btn,
+#finish-btn,
+#back-btn {
+    margin: 1;
+}

@@ -4,23 +4,15 @@
     height: auto;
 }
 
-DataTable {
-    height: 1fr;
+#header {
+    margin: 1;
 }
 
-.field-label {
-    margin-top: 1;
+Label {
+    margin-left: 1;
 }
 
-.button-row {
-    margin-top: 1;
-    height: auto;
-}
-
-.button-row Button {
-}
-
-#status-line {
-    height: auto;
-    margin-top: 1;
+#save-app-settings-btn {
+    margin-left: 1;
+    margin-right: 1;
 }

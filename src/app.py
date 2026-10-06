@@ -2,16 +2,17 @@ from textual.app import App
 from textual.binding import Binding
 from src.screens.dashboard import DashboardScreen
 from src.services.configuration import ConfigManager
-from src.screens.setup_wizard import WelcomeScreen
+from src.screens.welcome import WelcomeScreen
 from src.screens.settings import SettingsScreen
-from src.screens.login import LoginScreen
+# from src.screens.login import LoginScreen
 
 class HomelabApp(App):
     """Main application."""
     
     TITLE = "Homelab Dashboard"
-    SUB_TITLE = "Proxmox • Docker"
+    SUB_TITLE = "Proxmox"
 
+# TODO figure out how to have this on everypage without explicity having this code block on every page except the welcome and setup wizard page
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("d", "dashboard", "Dashboard"),
@@ -28,13 +29,12 @@ class HomelabApp(App):
     def on_mount(self) -> None:
         """Called when the application starts."""
         if self.config_manager.is_first_run():
-            self.push_screen(WelcomeScreen())
+            self.push_screen(WelcomeScreen(id="welcome-screen"))
         else:
             self.config_manager.load()
             self.push_screen(DashboardScreen())
 
     def action_open_settings(self) -> None:
-        # from screens.settings import SettingsScreen
         self.push_screen(SettingsScreen())
         pass
 
@@ -46,11 +46,6 @@ class HomelabApp(App):
                     self.push_screen(DashboardScreen())
                     break
                 self.pop_screen()
-            
-    # def _on_key(self, event):
-        #     match event.key:
-        #             case "d":
-        #                 self.push_screen(DashboardScreen())
             
     def action_refresh(self) -> None:
         """Refresh all data."""

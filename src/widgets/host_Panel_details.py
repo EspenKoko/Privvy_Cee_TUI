@@ -2,6 +2,7 @@ from pathlib import Path
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
+from textual.timer import Timer
 from textual.widgets import Label, Static
 
 from src.api.pve_api_service import CallProxmox
@@ -17,6 +18,11 @@ from src.services.polling_rate import PollingRateService
 class HostPanelDetails(Vertical):
     _css_path = Path(__file__).resolve().parents[1] / "css" / "host_panel.tcss"
     DEFAULT_CSS = _css_path.read_text(encoding="utf-8")
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._polling_enabled = True
+        self._polling_timer: Timer | None = None
     
     def compose(self) -> ComposeResult:
         # yield Label("HOST: <hostname>", id="host-details-label", classes="host-label")
@@ -46,15 +52,26 @@ class HostPanelDetails(Vertical):
             #     yield Static("Loading...", id="uptime-details", markup=False)
 
     def on_mount(self) -> None:
+        self._polling_enabled = True
         config_manager = getattr(self.app, "config_manager", None)
         interval = PollingRateService.get_polling_rate_seconds(config_manager)
         self.refresh_details()
-        self.set_interval(interval, self.refresh_details)
+        self._polling_timer = self.set_interval(interval, self.refresh_details)
+
+    def stop_polling(self) -> None:
+        self._polling_enabled = False
+        if self._polling_timer is not None:
+            self._polling_timer.stop()
+            self._polling_timer = None
 
     def refresh_details(self) -> None:
+        if not self._polling_enabled:
+            return
         self.run_worker(self.poll_details, exclusive=True, thread=True)
 
     def poll_details(self) -> None:
+        if not self._polling_enabled:
+            return
         config_manager = getattr(self.app, "config_manager", None)
         if config_manager is None:
             self.app.call_from_thread(
@@ -64,6 +81,8 @@ class HostPanelDetails(Vertical):
 
         try:
             hosts = config_manager.load().hosts
+            if not self._polling_enabled:
+                return
             if not hosts:
                 self.app.call_from_thread(
                     self._show_error, "No Proxmox hosts are configured."
@@ -73,10 +92,14 @@ class HostPanelDetails(Vertical):
             api = CallProxmox(app=self.app)
             last_error = None
             for host in hosts:
+                if not self._polling_enabled:
+                    return
                 try:
                     status_response = api.call_proxmox(
                         ProxmoxApiPaths.node_status(host.name), host=host.address
                     )
+                    if not self._polling_enabled:
+                        return
                     network_response = api.call_proxmox(
                         ProxmoxApiPaths.node_network(host.name), host=host.address
                     )
@@ -94,7 +117,8 @@ class HostPanelDetails(Vertical):
             message = last_error or "Could not load details for a configured node."
             self.app.call_from_thread(self._show_error, message)
         except (OSError, ValueError, RuntimeError) as error:
-            self.app.call_from_thread(self._show_error, str(error))
+            if self._polling_enabled:
+                self.app.call_from_thread(self._show_error, str(error))
 
     def _update_details(
         self,
@@ -102,6 +126,9 @@ class HostPanelDetails(Vertical):
         interfaces: list[NodeNetworkInterface],
         configured_name: str,
     ) -> None:
+        if not self._polling_enabled:
+            return
+
         cpu = status.cpuinfo
         cpu_model = cpu.model if cpu and cpu.model else "Unknown CPU"
         cores = cpu.cores if cpu and cpu.cores is not None else "?"
@@ -166,6 +193,8 @@ class HostPanelDetails(Vertical):
         return max(0.0, min(100.0, used / total * 100))
 
     def _show_error(self, message: str) -> None:
+        if not self._polling_enabled:
+            return
         # self.query_one("#host-details-label", Label).update("HOST: unavailable")
         for detail_id in (
             "#cpu-details",
@@ -173,7 +202,6 @@ class HostPanelDetails(Vertical):
             "#disk-details",
             "#ipv4-details",
             "#bridge-details",
-            "#uptime-details",
         ):
             self.query_one(detail_id, Static).update(message)
         

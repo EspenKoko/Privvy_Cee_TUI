@@ -7,6 +7,7 @@ from textual.containers import Container, Horizontal, Vertical
 from src.widgets.host_Panel import HostPanel
 from src.widgets.host_Panel_details import HostPanelDetails
 from src.widgets.server_panel import ServerPanel
+from src.widgets.dashboard_headers import DashboardHeaders
 from src.widgets.dashboard_panel import DashboardPanel
 
 class DashboardScreen(Screen):
@@ -20,15 +21,16 @@ class DashboardScreen(Screen):
 
     def refresh_data(self) -> None:
         self.app.config_manager.load()
-        self.query_one(DashboardPanel).update_stats()
+        self.query_one(DashboardHeaders).update_stats()
         self.query_one(HostPanel).refresh_stats()
         self.query_one(HostPanelDetails).refresh_details()
         self.query_one(ServerPanel).refresh_data()
 
     def compose(self):
         yield Header(show_clock=True)
+        # yield DashboardPanel()
         with Vertical(id="dashboard-content"):
-            yield DashboardPanel(id="dashboard-panel")
+            yield DashboardHeaders(id="dashboard-panel")
             with Horizontal(id="host-summary-row"):
                 yield HostPanel(id="host-panel")
                 yield HostPanelDetails(id="host-panel-details")
