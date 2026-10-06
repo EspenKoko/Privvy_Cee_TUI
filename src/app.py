@@ -60,3 +60,6 @@ class HomelabApp(App):
     # def action_open_test(self) -> None:
     #     self.push_screen(LoginScreen())
     #     pass
+    
+def main() -> None:
+    HomelabApp().run()
