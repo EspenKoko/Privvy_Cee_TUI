@@ -8,11 +8,9 @@ from textual.timer import Timer
 from textual.widgets import (
     Button,
     Label,
-    Static,
 )
 from src.api.pve_api_service import CallProxmox
 from src.services.api_call_paths import ProxmoxApiPaths
-from src.models.qemu_networking_type import QemuNetworkResponse
 from src.models.lxc_type import ProxmoxCT
 from src.models.qemu_type import ProxmoxVM
 from src.services.polling_rate import PollingRateService
@@ -28,15 +26,6 @@ class ServerInfo:
     total_ram: str
     uptime: str
     node: str | None = None
-
-
-ACTIVITY_LOG = [
-    "web-01 restarted successfully",
-    "db-replica shut down for maintenance",
-    "cache-01 CPU spike resolved",
-    "worker-01 stopped by admin",
-    "web-02 deployed new build",
-]
 
 STATUS_COLOR = {
     "Running": "green",
@@ -91,6 +80,7 @@ class ServerPanel(VerticalScroll):
         super().__init__(*args, **kwargs)
         self.servers: list[ServerInfo] = []
         self._fetching = False
+        self._polling_enabled = True
         self._polling_timer: Timer | None = None
         
     def compose(self) -> ComposeResult:
@@ -112,6 +102,8 @@ class ServerPanel(VerticalScroll):
         self.update_polling_interval()
 
     def update_polling_interval(self) -> None:
+        if not self._polling_enabled:
+            return
         if self._polling_timer is not None:
             self._polling_timer.stop()
         polling_rate = PollingRateService.get_polling_rate_seconds(
@@ -119,7 +111,15 @@ class ServerPanel(VerticalScroll):
         )
         self._polling_timer = self.set_interval(polling_rate, self.refresh_data)
 
+    def stop_polling(self) -> None:
+        self._polling_enabled = False
+        if self._polling_timer is not None:
+            self._polling_timer.stop()
+            self._polling_timer = None
+
     def refresh_data(self) -> None:
+        if not self._polling_enabled:
+            return
         if self._fetching:          # previous request still running, skip this tick
             return
         self._fetching = True
@@ -133,18 +133,24 @@ class ServerPanel(VerticalScroll):
     
     def _fetch_vm_metrics(self) -> None:
         try:
+            if not self._polling_enabled:
+                return
             cfg_mgr = self.app.config_manager
             cfg_mgr.load()
             rows: list[ServerInfo] = []
             errors: list[str] = []
 
             for host_config in cfg_mgr.config.hosts:
+                if not self._polling_enabled:
+                    return
                 api = CallProxmox(app=self.app)
 
                 for resource_type, path in (
                     ("VM", ProxmoxApiPaths.qemu(host_config.name)),
                     ("CT", ProxmoxApiPaths.lxc(host_config.name)),
                 ):
+                    if not self._polling_enabled:
+                        return
                     try:
                         print("Logs", resource_type, path)
                         response = api.call_proxmox(path, host=host_config.address)
@@ -160,7 +166,11 @@ class ServerPanel(VerticalScroll):
                     except RuntimeError as error:
                         errors.append(f"{host_config.name}: {error}")
 
-            self.app.call_from_thread(self._update_servers, rows, errors)
+            if self._polling_enabled:
+                self.app.call_from_thread(self._update_servers, rows, errors)
+        except (OSError, ValueError, RuntimeError) as error:
+            if self._polling_enabled:
+                self.app.call_from_thread(self._update_servers, [], [str(error)])
         finally:
             self._fetching = False
 
@@ -202,6 +212,8 @@ class ServerPanel(VerticalScroll):
         )
 
     def _update_servers(self, servers: list[ServerInfo], errors: list[str]) -> None:
+        if not self._polling_enabled:
+            return
         self.servers = sorted(servers, key=lambda server: server.name.casefold())
         
         incoming = {slugify(server.name, server.id): server for server in self.servers}

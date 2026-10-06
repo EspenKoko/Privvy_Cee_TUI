@@ -5,7 +5,7 @@ from textual.widgets import Static, DataTable, Input, Label, Button, Select
 from textual.app import ComposeResult
 from textual import on
 
-from src.services.configuration import ConfigManager, ServerConfig, AppSettings
+from src.services.configuration import ConfigManager, ServerConfig
 
 class ServerConfiguration(Horizontal):
     
@@ -48,7 +48,7 @@ class ServerConfiguration(Horizontal):
 
                 with Horizontal(classes="button-row"):
                     yield Button("Save Server", id="save-server-btn", variant="success")
-                    yield Button("Cancel", id="cancel-edit-btn")
+                    yield Button("Cancel/Clear", id="cancel-edit-btn")
             yield Static("", id="status-line")
 
     def on_mount(self) -> None:

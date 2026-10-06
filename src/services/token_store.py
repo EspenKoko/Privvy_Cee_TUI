@@ -84,10 +84,11 @@ class TokenStore:
 
     def delete_token(self) -> None:
         """Remove token from keyring and any fallback file."""
-        try:
-            keyring.delete_password(self.SERVICE_NAME, self.TOKEN_NAME)
-        except Exception:
-            pass
+        for token_name in ("CSRFToken", "AccessTicket"):
+            try:
+                keyring.delete_password(self.SERVICE_NAME, token_name)
+            except keyring.errors.PasswordDeleteError:
+                pass
 
         # try:
         #     if self.TOKEN_FILE.exists():

@@ -9,7 +9,7 @@ import tomli_w
 import keyring
 import platformdirs
 
-from models.configuration_type import ServerConfig, AppConfig, AppSettings
+from src.models.configuration_type import ServerConfig, AppConfig, AppSettings
 
 APP_NAME = "privvy_cee_tui"
 KEYRING_SERVICE = "PrivvyCeeTui"  # namespace for all our keyring entries
@@ -95,3 +95,10 @@ class ConfigManager:
             self.delete_password(server)
             self.config.servers.remove(server)
             self.save()
+
+    def delete_all_data(self) -> None:
+        for server in [*self.config.hosts, *self.config.servers]:
+            self.delete_password(server)
+
+        self.config_path.unlink(missing_ok=True)
+        self.config = AppConfig()

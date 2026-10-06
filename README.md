@@ -1,73 +1,125 @@
-Getting started
+# Privvy Cee TUI
 
-## Setting up poetry
-[install pipx](https://pipx.pypa.io/stable/how-to/install-pipx/#on-windows) if not already installed
+A terminal-based homelab dashboard built with Python and Textual for monitoring hosts, VMs, containers, and system health from a lightweight TUI.
+
+## Overview
+
+Privvy Cee TUI provides a quick, keyboard-friendly view of your infrastructure with:
+- Host resource monitoring
+- VM status and health
+- Container overview
+- Network and storage metrics
+- Local configuration persistence
+- Windows Credential Manager integration for secure secrets storage
+
+## Requirements
+
+- Python 3.10+
+- Poetry
+- Textual
+- Windows 10/11 (for local credential storage support)
+
+## Getting started
+
+### 1. Install pipx
+
+If you do not already have `pipx`, install it:
+
 ```cmd
 py -m pip install --user pipx
 ```
 
-## Install Poetry if not already installed
-[Install poetry](https://python-poetry.org/docs/#installation)
+### 2. Install Poetry
+
 ```cmd
 pipx install poetry
 ```
 
-## Configure poetry
+### 3. Configure Poetry
+
 ```cmd
 poetry config virtualenvs.in-project true
 poetry install
+```
 
-python -m venv .venv # if needed
+If the virtual environment has not been created yet:
+
+```cmd
+python -m venv .venv
 .venv\Scripts\Activate.ps1
 poetry env info
 ```
 
-## Install Textual
-https://textual.textualize.io/getting_started/
+### 4. Install Textual
 
 ```cmd
 pip install textual textual-dev
 ```
 
-To exit the tui 
+## Running the app
 
-```
-ctrl+q
+### Standard run
+
+From the project root:
+
+```cmd
+python -m main
 ```
 
-To live update during debug
-run the app module or the package entrypoint with Textual's dev runner:
-```
+### Development mode with live reload
+
+```cmd
 .venv\Scripts\textual.exe run --dev main
 ```
 
-Or run the app normally:
-```
-python -m main
+or:
 
-<!-- When running as a module make sure you are in the module package's root -->
-python -m privvy_cee_ui.metrics.more_metrics
-
-```
-
-to live debug
 ```powershell
 textual run --dev main
 ```
 
-in seporate terminal run
+### Debug console
+
+Open a separate terminal:
+
 ```powershell
 textual console
 ```
 
-All server config is saved to C:\Users\espen.koko\AppData\Local\privvy_cee_ui
-and the passwords are saved to windows crednetial manager
+## Exiting the TUI
 
-# builing the app to an executable
-```python
-python -m PyInstaller --onefile --collect-all textual main.py
+Use:
+
+```text
+Ctrl + Q
 ```
 
+## Configuration and storage
+
+All application configuration is stored at:
+**NB!** This file is very important as modifications or deletions in the file outside the app can result in isolated windows credentials that cannot be mapped back to the app 
+
+```text
+C:\Users\espen.koko\AppData\Local\privvy_cee_ui
+```
+
+Passwords are stored in the Windows Credential Manager.
+
+## Build executable
+
+To build the app as a single-file executable:
+
+```powershell
+./build.ps1
+```
+
+## Documentation
+
+Api documantation can be found in the `Proxmox.json`
+
+## Example dashboard
+
+```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │ Homelab Dashboard                                   Connected ● 22:14:03     │
 ├──────────────────────────────────────────────────────────────────────────────┤
@@ -99,147 +151,14 @@ python -m PyInstaller --onefile --collect-all textual main.py
 Alerts
 ────────────────────────────────────────────────────────────────────────────────
 • None
+```
 
+## Contribution
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Host: Proxmox-01                                           Connected ●       │
-├─────────────────────────────────────────────────────────────────────────────┤
+Cover image source:
 
-CPU
-─────────────────────────────────────────────────────────────────────────────
-Usage          18%
-Temperature    48°C
-Frequency      4.8GHz
-Sockets        1
-Cores          8
-Threads        16
-Load Avg       1.8 1.4 1.2
+```text
+Image: flaticon.com/free-icons/biometric-identification
+```
 
-Per-Core Usage
-
-Core0   ████████████ 42%
-Core1   ███ 11%
-Core2   ███████ 26%
-Core3   ██████████ 38%
-...
-
-Memory
-
-Used        13GB
-Free        19GB
-Swap        512MB
-
-Disk
-
-nvme0n1
-
-Usage       61%
-Read        110MB/s
-Write       18MB/s
-IOPS        300
-
-Network
-
-eth0
-
-Download    38MB/s
-Upload      4MB/s
-Errors      0
-Packets/s   2450
-
-Temperatures
-
-CPU      48°C
-NVME     42°C
-
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Ubuntu Docker VM                                            Running ●        │
-├─────────────────────────────────────────────────────────────────────────────┤
-
-General
-
-ID             102
-Host           Proxmox-01
-OS             Ubuntu Server 24.04
-IP             10.0.0.11
-Uptime         22 days
-
-Resources
-
-vCPUs          4
-CPU Usage      8%
-
-Memory         8GB
-Used           2.4GB
-
-Disk
-
-VirtIO
-Used           42GB / 100GB
-
-Network
-
-Receive        4MB/s
-Transmit       900KB/s
-
-Snapshots
-
-• clean-install
-• before-update
-
-Recent Events
-
-22:11 Backup Completed
-18:30 apt update
-Yesterday Reboot
-
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ Jellyfin Container                                        Running ●          │
-├──────────────────────────────────────────────────────────────────────────────┤
-
-General
-
-Container ID     210
-Image            jellyfin:latest
-Version          10.10
-
-CPU
-
-Usage            6%
-Limits           4 cores
-
-Memory
-
-Limit            4GB
-Used             1.2GB
-
-Disk
-
-Writable Layer   900MB
-Volumes          3
-
-Network
-
-IP               10.0.0.25
-RX               2MB/s
-TX               400KB/s
-
-Ports
-
-8096
-8920
-
-Volumes
-
-/media
-/config
-/cache
-
-Logs
-
-[INFO] ...
-[INFO] ...
-
-# Contributions
-
-'image: flaticon.com/free-icons/biometric-identification'. This cover has been designed using resources from Flaticon.com
+This cover has been designed using resources from Flaticon.com.

@@ -5,10 +5,11 @@ from pathlib import Path
 from textual.screen import Screen
 from textual.widgets import Header, Footer
 from textual.app import ComposeResult
+from textual.widgets import TabbedContent, TabPane
+from textual.binding import Binding
 
 from src.widgets.application_settings import ApplicationSettings
 from src.widgets.server_settings import ServerConfiguration
-from textual.widgets import TabbedContent, TabPane
 
 class SettingsScreen(Screen):
     """
@@ -16,9 +17,11 @@ class SettingsScreen(Screen):
     Reachable via a keybinding (e.g. Ctrl+S) from the main app.
     """
 
+
     BINDINGS = [
-        ("escape", "app.pop_screen", "Back"),
-    ]
+            # Binding("escape", "cancel", "Cancel"),
+            # Binding("d", "app.dashboard", "Dashboard", show=False, priority=True),
+        ]
 
     CSS_PATH = str(Path(__file__).resolve().parents[1] / "css" / "settings_screen.tcss")
     
