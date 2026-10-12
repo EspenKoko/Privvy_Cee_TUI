@@ -12,51 +12,72 @@ Privvy Cee TUI provides a quick, keyboard-friendly view of your infrastructure w
 - Local configuration persistence
 - Windows Credential Manager integration for secure secrets storage
 
-## Requirements
+## Prerequisites
 
-- Python 3.10+
-- Poetry
-- Textual
-- Windows 10/11 (for local credential storage support)
+Before installing and running the app, make sure you have:
+
+- Python 3.10 or newer
+- Windows 10/11
+- PowerShell
+
+If you are using a virtual environment, activate it first:
+
+```powershell
+cd C:\Development\Projects\Tech_Accelerator_2026\Privvy_Cee_TUI
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+## Install and run
+
+### Development run
+From the project root, install the app in editable mode:
+
+```powershell
+cd C:\Development\Projects\Tech_Accelerator_2026\Privvy_Cee_TUI
+py -3.10 -m pip install --upgrade pip
+py -3.10 -m pip install --user --editable .
+```
+
+If `homelab` is not recognized, add the user Scripts folder to your PATH and reopen PowerShell:
+
+```powershell
+$env:Path += ";$env:APPDATA\Python\Python310\Scripts"
+```
+
+Then run the app from any directory:
+
+```powershell
+homelab
+```
+
+If you used a local virtual environment instead:
+
+```powershell
+cd C:\Development\Projects\Tech_Accelerator_2026\Privvy_Cee_TUI
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install --editable .
+homelab
+```
+
+### Production exe file run
+
+```powershell
+$bin = "C:\Development\Projects\Tech_Accelerator_2026\Privvy_Cee_TUI\dist"
+[Environment]::SetEnvironmentVariable(
+  "Path",
+  [Environment]::GetEnvironmentVariable("Path", "User") + ";$bin",
+  "User"
+)
+```
+
+Restart powershell session and run the app with
+```powershell
+PrivvyCee
+```
 
 ## Getting started
-
-### 1. Install pipx
-
-If you do not already have `pipx`, install it:
-
-```cmd
-py -m pip install --user pipx
-```
-
-### 2. Install Poetry
-
-```cmd
-pipx install poetry
-```
-
-### 3. Configure Poetry
-
-```cmd
-poetry config virtualenvs.in-project true
-poetry install
-```
-
-If the virtual environment has not been created yet:
-
-```cmd
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-poetry env info
-```
-
-### 4. Install Textual
-
-```cmd
-pip install textual textual-dev
-```
-
-## Running the app
 
 ### Standard run
 
@@ -67,12 +88,6 @@ python -m main
 ```
 
 ### Development mode with live reload
-
-```cmd
-.venv\Scripts\textual.exe run --dev main
-```
-
-or:
 
 ```powershell
 textual run --dev main
@@ -86,6 +101,12 @@ Open a separate terminal:
 textual console
 ```
 
+Then run in another terminal
+
+```powershell
+textual run --dev main
+```
+
 ## Exiting the TUI
 
 Use:
@@ -97,10 +118,10 @@ Ctrl + Q
 ## Configuration and storage
 
 All application configuration is stored at:
-**NB!** This file is very important as modifications or deletions in the file outside the app can result in isolated windows credentials that cannot be mapped back to the app 
+**NB!** This file is very important as modifications or deletions in the file outside the app can result in isolated windows credentials that cannot be mapped back to the app
 
 ```text
-C:\Users\espen.koko\AppData\Local\privvy_cee_ui
+C:\Users\espen.koko\AppData\Local\privvy_cee_tui
 ```
 
 Passwords are stored in the Windows Credential Manager.
@@ -110,12 +131,12 @@ Passwords are stored in the Windows Credential Manager.
 To build the app as a single-file executable:
 
 ```powershell
-./build.ps1
+./build-prod.ps1
 ```
 
 ## Documentation
 
-Api documantation can be found in the `Proxmox.json`
+Api documentation can be found in the `Proxmox.json`
 
 ## Example dashboard
 
