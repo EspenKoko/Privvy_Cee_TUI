@@ -1,0 +1,9 @@
+Privvy Cee installation complete
+
+Select Finish to close setup. If you selected the option to add Privvy Cee to your user PATH, open a new PowerShell or Command Prompt window and run:
+
+    privvycee
+
+You can also launch Privvy Cee from the Start Menu shortcut.
+
+The application stores its configuration under your local application data folder and stores credentials in Windows Credential Manager. Uninstall Privvy Cee from Windows Settings > Apps > Installed apps.

@@ -1,0 +1,8 @@
+Before installing Privvy Cee
+
+Privvy Cee is a terminal-based dashboard for Proxmox homelabs.
+
+This installer installs the application for your Windows user and does not require Python. You can choose to add the installation folder to your user PATH; when selected, open a new terminal after installation and run: privvycee
+
+The application needs network access to connect to Proxmox servers that you configure. Server settings are stored locally in your Windows user profile, and credentials are stored using Windows Credential Manager.
+
