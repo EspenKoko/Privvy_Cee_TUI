@@ -1,0 +1,49 @@
+name: Build Linux release assets
+description: Build and ZIP the Linux executable.
+
+inputs:
+  app-name:
+    description: Name used for the executable and its output directory.
+    required: true
+  python-version:
+    description: Python version used for the build.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install dependencies
+      shell: bash
+      run: python -m pip install -r requirements.txt
+
+    - name: Build executable
+      shell: bash
+      env:
+        APP_NAME: ${{ inputs.app-name }}
+      run: |
+        pyinstaller \
+          --noconfirm \
+          --onedir \
+          --name "$APP_NAME" \
+          --collect-all textual \
+          --add-data "src/css:src/css" \
+          main.py
+
+    - name: Create Linux ZIP
+      shell: bash
+      env:
+        APP_NAME: ${{ inputs.app-name }}
+      working-directory: dist
+      run: zip -r PrivvyCeeTUI-linux.zip "$APP_NAME"
+
+    - name: Upload Linux artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PrivvyCee-linux
+        path: dist/PrivvyCeeTUI-linux.zip # upload-artifact in cd.yml strips the dist prefix from the stored artifact
+        if-no-files-found: error

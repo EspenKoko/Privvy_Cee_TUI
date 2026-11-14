@@ -23,56 +23,12 @@ Before installing and running the app, make sure you have:
 If you are using a virtual environment, activate it first:
 
 ```powershell
-cd C:\Development\Projects\Tech_Accelerator_2026\Privvy_Cee_TUI
+cd <Path to project>\Privvy_Cee_TUI
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-## Install and run
-
-### Development run
-From the project root, install the app in editable mode:
-
-```powershell
-cd C:\Development\Projects\Tech_Accelerator_2026\Privvy_Cee_TUI
-py -3.10 -m pip install --upgrade pip
-py -3.10 -m pip install --user --editable .
-```
-
-If `homelab` is not recognized, add the user Scripts folder to your PATH and reopen PowerShell:
-
-```powershell
-$env:Path += ";$env:APPDATA\Python\Python310\Scripts"
-```
-
-Then run the app from any directory:
-
-```powershell
-homelab
-```
-
-If you used a local virtual environment instead:
-
-```powershell
-cd C:\Development\Projects\Tech_Accelerator_2026\Privvy_Cee_TUI
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install --editable .
-homelab
-```
-
-### Production exe file run
-
-```powershell
-$bin = "C:\Development\Projects\Tech_Accelerator_2026\Privvy_Cee_TUI\dist"
-[Environment]::SetEnvironmentVariable(
-  "Path",
-  [Environment]::GetEnvironmentVariable("Path", "User") + ";$bin",
-  "User"
-)
-```
-
-Restart powershell session and run the app with
+Restart your terminal session and run the app with
 ```powershell
 PrivvyCee
 ```
@@ -117,21 +73,71 @@ Ctrl + Q
 
 ## Configuration and storage
 
-All application configuration is stored at:
+All application configuration is stored at in AppData and windows credential manager
 **NB!** This file is very important as modifications or deletions in the file outside the app can result in isolated windows credentials that cannot be mapped back to the app
 
 ```text
-C:\Users\espen.koko\AppData\Local\privvy_cee_tui
+%APPDATA%\Local\privvy_cee_tui
 ```
 
-Passwords are stored in the Windows Credential Manager.
+## Install and run
+
+### Development run
+From the project root, install the app in editable mode:
+
+```powershell
+cd <Path to project>\Privvy_Cee_TUI
+py -3.10 -m pip install --upgrade pip
+py -3.10 -m pip install --user --editable .
+```
+
+If `homelab` is not recognized, add the user Scripts folder to your PATH and reopen PowerShell:
+
+```powershell
+$env:Path += ";$env:APPDATA\Python\Python310\Scripts"
+```
+
+Then run the app from any directory:
+
+```powershell
+homelab
+```
+
+If you used a local virtual environment instead:
+
+```powershell
+cd <Path to project>\Privvy_Cee_TUI
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install --editable .
+homelab
+```
+
+### Production exe file run
+
+Add executable to the path once built
+
+```powershell
+$bin = "<Path to project>\Privvy_Cee_TUI\dist"
+[Environment]::SetEnvironmentVariable(
+  "Path",
+  [Environment]::GetEnvironmentVariable("Path", "User") + ";$bin",
+  "User"
+)
+```
 
 ## Build executable
 
-To build the app as a single-file executable:
+To build the app as a one-folder executable and package it in an installer:
 
 ```powershell
-./build-prod.ps1
+./.github/scripts/build.ps1
+```
+
+To build the app as a single file:
+
+```powershell
+./.github/scripts/build-combined.ps1
 ```
 
 ## Documentation

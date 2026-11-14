@@ -1,0 +1,86 @@
+name: CD
+
+on:
+    # push:
+    #     branches: ["master"]
+    # pull_request:
+    #     branches: ["master"]
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Enter the version (e.g., v1.0.0)"
+                required: true
+            prerelease:
+                description: Is this a prerelease?
+                type: boolean
+                required: true
+                default: false
+
+permissions:
+    contents: read
+
+jobs:
+    build-windows:
+        environment:
+            name: PrivvyCee
+        runs-on: windows-latest
+        env:
+            APP_NAME: ${{ vars.APP_NAME || 'PrivvyCee' }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Build Windows artifacts
+              uses: ./.github/actions/build-windows
+              with:
+                  app-name: ${{ env.APP_NAME }}
+                  python-version: ${{ vars.PYTHON_VERSION }}
+
+    build-linux:
+        environment:
+            name: PrivvyCee
+        runs-on: ubuntu-latest
+        env:
+            APP_NAME: ${{ vars.APP_NAME || 'PrivvyCee' }}
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Build Linux artifact
+              uses: ./.github/actions/build-linux
+              with:
+                  app-name: ${{ env.APP_NAME }}
+                  python-version: ${{ vars.PYTHON_VERSION }}
+
+    release:
+        if: github.event_name == 'workflow_dispatch'
+        needs: [build-windows, build-linux]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+
+        steps:
+            - name: Download build artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: release-assets
+                  merge-multiple: true
+
+            - name: List downloaded files
+              run: ls -R
+
+            # - name: Make files executable (Linux)
+            #   run: chmod +x app-* || true
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v3
+              with:
+                  tag_name: ${{ github.event.inputs.version }}
+                  name: Release ${{ github.event.inputs.version }}
+                  draft: false
+                  prerelease: ${{ github.event.inputs.prerelease }}
+                  files: |
+                    release-assets/PrivvyCeeTUI-linux.zip
+                    release-assets/PrivvyCeeTUI-windows.zip
+                    release-assets/PrivvyCeeTUIsetup.exe
