@@ -3,8 +3,8 @@ name: CD
 on:
     push:
         branches: ["master"]
-    pull_request:
-        branches: ["master"]
+    # pull_request:
+    #     branches: ["master"]
     workflow_dispatch:
         inputs:
             version:
@@ -28,11 +28,11 @@ permissions:
     contents: read
 
 jobs:
-    ci:
-        uses: ./.github/workflows/ci.yml
+    # ci:
+    #     uses: ./.github/workflows/ci.yml
 
     build-windows:
-        needs: ci
+        # needs: ci
         environment:
             name: PrivvyCee
         runs-on: windows-latest
@@ -49,7 +49,7 @@ jobs:
                   python-version: ${{ vars.PYTHON_VERSION }}
 
     build-linux:
-        needs: ci
+        # needs: ci
         environment:
             name: PrivvyCee
         runs-on: ubuntu-latest
@@ -69,7 +69,8 @@ jobs:
     # Add a way to publish last run artefacts without having to rerun the workflow manually and modify this one 
     release:
         if: github.event_name == 'workflow_dispatch'
-        needs: [ci, build-windows, build-linux]
+        # needs: [ci, build-windows, build-linux]
+        needs: [build-windows, build-linux]
         runs-on: ubuntu-latest
         permissions:
             contents: write

@@ -5,7 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "homelab-dashboard"
 version = "0.1.0"
-dependencies = ["textual", "requests", "tomli-w", "keyring", "pydantic"]
+dependencies = [
+    "textual",
+    "requests",
+    "tomli-w",
+    "keyring",
+    "pydantic",
+    "platformdirs",
+    "python-dotenv",
+    "tomli; python_version < '3.11'",
+]
 
 [project.scripts]
 homelab = "src.app:main"
