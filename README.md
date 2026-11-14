@@ -131,13 +131,13 @@ $bin = "<Path to project>\Privvy_Cee_TUI\dist"
 To build the app as a one-folder executable and package it in an installer:
 
 ```powershell
-./.github/scripts/build.ps1
+./build.ps1
 ```
 
 To build the app as a single file:
 
 ```powershell
-./.github/scripts/build-combined.ps1
+./build-combined.ps1
 ```
 
 ## Documentation
