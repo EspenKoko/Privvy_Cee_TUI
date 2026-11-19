@@ -8,7 +8,6 @@ from src.widgets.host_Panel import HostPanel
 from src.widgets.host_Panel_details import HostPanelDetails
 from src.widgets.server_panel import ServerPanel
 from src.widgets.dashboard_headers import DashboardHeaders
-from src.widgets.dashboard_panel import DashboardPanel
 
 class DashboardScreen(Screen):
     CSS_PATH = str(Path(__file__).resolve().parents[1] / "css" / "dashboard.tcss")
@@ -22,13 +21,12 @@ class DashboardScreen(Screen):
     def refresh_data(self) -> None:
         self.app.config_manager.load()
         self.query_one(DashboardHeaders).update_stats()
-        self.query_one(HostPanel).refresh_data()
-        self.query_one(HostPanelDetails).refresh_data()
-        self.query_one(ServerPanel).refresh_data()
+        self.query_one(HostPanel).refresh_data(force=True)
+        self.query_one(HostPanelDetails).refresh_data(force=True)
+        self.query_one(ServerPanel).refresh_data(force=True)
 
     def compose(self):
         yield Header(show_clock=True)
-        # yield DashboardPanel()
         with Vertical(id="dashboard-content"):
             yield DashboardHeaders(id="dashboard-panel")
             with Horizontal(id="host-summary-row"):

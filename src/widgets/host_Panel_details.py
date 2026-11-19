@@ -1,4 +1,5 @@
 from pathlib import Path
+from functools import partial
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
@@ -73,41 +74,49 @@ class HostPanelDetails(Vertical):
             self._polling_timer.stop()
             self._polling_timer = None
 
-    def refresh_data(self) -> None:
-        if not self._polling_enabled:
+    def refresh_data(self, *, force: bool = False) -> None:
+        if not self._polling_enabled and not force:
             return
-        self.run_worker(self.fetch_metrics, exclusive=True, thread=True)
+        self.run_worker(
+            partial(self.fetch_metrics, force=force),
+            exclusive=True,
+            thread=True,
+        )
 
-    def fetch_metrics(self) -> None:
-        if not self._polling_enabled:
+    def fetch_metrics(self, force: bool = False) -> None:
+        if not self._polling_enabled and not force:
             return
         config_manager = getattr(self.app, "config_manager", None)
         if config_manager is None:
             self.app.call_from_thread(
-                self._show_error, "No configuration manager is available."
+                self._show_error,
+                "No configuration manager is available.",
+                force,
             )
             return
 
         try:
             hosts = config_manager.load().hosts
-            if not self._polling_enabled:
+            if not self._polling_enabled and not force:
                 return
             if not hosts:
                 self.app.call_from_thread(
-                    self._show_error, "No Proxmox hosts are configured."
+                    self._show_error,
+                    "No Proxmox hosts are configured.",
+                    force,
                 )
                 return
 
             api = CallProxmox(app=self.app)
             last_error = None
             for host in hosts:
-                if not self._polling_enabled:
+                if not self._polling_enabled and not force:
                     return
                 try:
                     status_response = api.call_proxmox(
                         ProxmoxApiPaths.node_status(host.name), host=host.address
                     )
-                    if not self._polling_enabled:
+                    if not self._polling_enabled and not force:
                         return
                     network_response = api.call_proxmox(
                         ProxmoxApiPaths.node_network(host.name), host=host.address
@@ -119,23 +128,28 @@ class HostPanelDetails(Vertical):
                     continue
 
                 self.app.call_from_thread(
-                    self._update_details, status, network.data, host.name
+                    self._update_metrics,
+                    status,
+                    network.data,
+                    host.name,
+                    force,
                 )
                 return
 
             message = last_error or "Could not load details for a configured node."
-            self.app.call_from_thread(self._show_error, message)
+            self.app.call_from_thread(self._show_error, message, force)
         except (OSError, ValueError, RuntimeError) as error:
-            if self._polling_enabled:
-                self.app.call_from_thread(self._show_error, str(error))
+            if self._polling_enabled or force:
+                self.app.call_from_thread(self._show_error, str(error), force)
 
-    def _update_details(
+    def _update_metrics(
         self,
         status: NodeStatusData,
         interfaces: list[NodeNetworkInterface],
         configured_name: str,
+        force: bool = False,
     ) -> None:
-        if not self._polling_enabled:
+        if not self._polling_enabled and not force:
             return
 
         cpu = status.cpuinfo
@@ -201,10 +215,9 @@ class HostPanelDetails(Vertical):
             return 0.0
         return max(0.0, min(100.0, used / total * 100))
 
-    def _show_error(self, message: str) -> None:
-        if not self._polling_enabled:
+    def _show_error(self, message: str, force: bool = False) -> None:
+        if not self._polling_enabled and not force:
             return
-        # self.query_one("#host-details-label", Label).update("HOST: unavailable")
         for detail_id in (
             "#cpu-details",
             "#ram-details",
