@@ -7,6 +7,7 @@ from textual.widgets import ProgressBar, Label, Static
 
 from src.api.pve_api_service import CallProxmox
 from src.services.api_call_paths import ProxmoxApiPaths
+from src.services.polling_rate import PollingRateService
 
 class HostPanel(Vertical):
     _css_path = Path(__file__).resolve().parents[1] / "css" / "host_panel.tcss"
@@ -14,7 +15,8 @@ class HostPanel(Vertical):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._polling_enabled = True
+        polling_status = PollingRateService.get_polling_status(self.app.config_manager)
+        self._polling_enabled = polling_status
         self._polling_timer: Timer | None = None
     
     def compose(self) -> ComposeResult:
@@ -37,8 +39,19 @@ class HostPanel(Vertical):
                 yield Static(id="extra_stats")
 
     def on_mount(self) -> None:
-        self.refresh_stats()
-        self._polling_timer = self.set_interval(1.0, self.refresh_stats)
+        self.update_polling_interval()
+        self.refresh_data()
+    
+    def update_polling_interval(self) -> None:
+        config_manager = getattr(self.app, "config_manager", None)
+        polling_rate = PollingRateService.get_polling_rate_seconds(config_manager)
+        self._polling_enabled = PollingRateService.get_polling_status(config_manager)
+
+        if self._polling_timer is not None:
+            self._polling_timer.stop()
+            self._polling_timer = None
+        if self._polling_enabled:
+            self._polling_timer = self.set_interval(polling_rate, self.refresh_data)
 
     def stop_polling(self) -> None:
         self._polling_enabled = False
@@ -46,12 +59,12 @@ class HostPanel(Vertical):
             self._polling_timer.stop()
             self._polling_timer = None
 
-    def refresh_stats(self) -> None:
+    def refresh_data(self) -> None:
         if not self._polling_enabled:
             return
-        self.run_worker(self.poll_metrics, exclusive=True, thread=True)
+        self.run_worker(self.fetch_metrics, exclusive=True, thread=True)
 
-    def poll_metrics(self) -> None:
+    def fetch_metrics(self) -> None:
         if not self._polling_enabled:
             return
         config_manager = getattr(self.app, "config_manager", None)

@@ -22,8 +22,8 @@ class DashboardScreen(Screen):
     def refresh_data(self) -> None:
         self.app.config_manager.load()
         self.query_one(DashboardHeaders).update_stats()
-        self.query_one(HostPanel).refresh_stats()
-        self.query_one(HostPanelDetails).refresh_details()
+        self.query_one(HostPanel).refresh_data()
+        self.query_one(HostPanelDetails).refresh_data()
         self.query_one(ServerPanel).refresh_data()
 
     def compose(self):

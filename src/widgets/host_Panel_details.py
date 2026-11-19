@@ -21,7 +21,8 @@ class HostPanelDetails(Vertical):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._polling_enabled = True
+        polling_status = PollingRateService.get_polling_status(self.app.config_manager)
+        self._polling_enabled = polling_status
         self._polling_timer: Timer | None = None
     
     def compose(self) -> ComposeResult:
@@ -52,11 +53,19 @@ class HostPanelDetails(Vertical):
             #     yield Static("Loading...", id="uptime-details", markup=False)
 
     def on_mount(self) -> None:
-        self._polling_enabled = True
+        self.update_polling_interval()
+        self.refresh_data()
+        
+    def update_polling_interval(self) -> None:
         config_manager = getattr(self.app, "config_manager", None)
-        interval = PollingRateService.get_polling_rate_seconds(config_manager)
-        self.refresh_details()
-        self._polling_timer = self.set_interval(interval, self.refresh_details)
+        polling_rate = PollingRateService.get_polling_rate_seconds(config_manager)
+        self._polling_enabled = PollingRateService.get_polling_status(config_manager)
+
+        if self._polling_timer is not None:
+            self._polling_timer.stop()
+            self._polling_timer = None
+        if self._polling_enabled:
+            self._polling_timer = self.set_interval(polling_rate, self.refresh_data)
 
     def stop_polling(self) -> None:
         self._polling_enabled = False
@@ -64,12 +73,12 @@ class HostPanelDetails(Vertical):
             self._polling_timer.stop()
             self._polling_timer = None
 
-    def refresh_details(self) -> None:
+    def refresh_data(self) -> None:
         if not self._polling_enabled:
             return
-        self.run_worker(self.poll_details, exclusive=True, thread=True)
+        self.run_worker(self.fetch_metrics, exclusive=True, thread=True)
 
-    def poll_details(self) -> None:
+    def fetch_metrics(self) -> None:
         if not self._polling_enabled:
             return
         config_manager = getattr(self.app, "config_manager", None)

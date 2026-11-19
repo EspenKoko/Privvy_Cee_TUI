@@ -80,7 +80,8 @@ class ServerPanel(VerticalScroll):
         super().__init__(*args, **kwargs)
         self.servers: list[ServerInfo] = []
         self._fetching = False
-        self._polling_enabled = True
+        polling_status = PollingRateService.get_polling_status(self.app.config_manager)
+        self._polling_enabled = polling_status
         self._polling_timer: Timer | None = None
         
     def compose(self) -> ComposeResult:
@@ -98,18 +99,20 @@ class ServerPanel(VerticalScroll):
             yield ServerRow(server)
 
     def on_mount(self) -> None:
-        self.refresh_data()
         self.update_polling_interval()
+        self.refresh_data()
 
     def update_polling_interval(self) -> None:
-        if not self._polling_enabled:
-            return
+        config_manager = getattr(self.app, "config_manager", None)
+        polling_rate = PollingRateService.get_polling_rate_seconds(config_manager)
+        self._polling_enabled = PollingRateService.get_polling_status(config_manager)
+
         if self._polling_timer is not None:
             self._polling_timer.stop()
-        polling_rate = PollingRateService.get_polling_rate_seconds(
-            self.app.config_manager
-        )
-        self._polling_timer = self.set_interval(polling_rate, self.refresh_data)
+            self._polling_timer = None
+        if self._polling_enabled:
+            self._polling_timer = self.set_interval(polling_rate, self.refresh_data)
+
 
     def stop_polling(self) -> None:
         self._polling_enabled = False
@@ -123,7 +126,7 @@ class ServerPanel(VerticalScroll):
         if self._fetching:          # previous request still running, skip this tick
             return
         self._fetching = True
-        self.run_worker(self._fetch_vm_metrics, exclusive=True, thread=True)
+        self.run_worker(self.fetch_metrics, exclusive=True, thread=True)
 
 
     def set_status(self, slug: str, status: str) -> None:
@@ -131,7 +134,7 @@ class ServerPanel(VerticalScroll):
         label.update(status)
         label.styles.color = STATUS_COLOR[status]
     
-    def _fetch_vm_metrics(self) -> None:
+    def fetch_metrics(self) -> None:
         try:
             if not self._polling_enabled:
                 return

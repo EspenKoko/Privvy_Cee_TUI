@@ -15,7 +15,7 @@ from textual.app import ComposeResult
 from textual.widget import Widget
 
 from src.services.configuration import ConfigManager, ServerConfig
-from src.api.pve_access_ticket import PVEAuthentivation
+from src.api.pve_access_ticket import PVEAuthentication
 
 
 class AddHostWidget(Widget):
@@ -63,25 +63,49 @@ class AddHostWidget(Widget):
                     )
                     ssh_key_input.display = False
                     yield ssh_key_input
-                    yield Checkbox("Using proxmox", id="hypervisorCheck", value=False)
+                    yield Checkbox("Using Hypervisor", id="hypervisorCheck", value=False)
                     hypervisor_label = Label("Hypervisor type", id="hypervisor-label")
                     hypervisor_label.display = False
                     yield hypervisor_label
                     hypervisor_options = RadioSet(
                         RadioButton("Proxmox", id="proxmox-option"),
-                        RadioButton("Other", id="other-hypervisor-option"),
+                        # RadioButton("Other", id="other-hypervisor-option"),
                         id="hypervisor-options",
                     )
                     hypervisor_options.display = False
                     yield hypervisor_options
-
+                    pve_api_key_label = Label("Proxmox API Key", id="pve_api_key_label")
+                    pve_api_key_label.display = False
+                    yield pve_api_key_label
+                    pve_api_key = Input(placeholder="Key obtained from proxmox", id="pve_api_key")
+                    pve_api_key.display = False
+                    yield pve_api_key
+                    
                     yield Button("Add Host", id="add-btn", variant="primary")
 
     @on(Checkbox.Changed, "#hypervisorCheck")
     def toggle_hypervisor_options(self, event: Checkbox.Changed) -> None:
         self.query_one("#hypervisor-label", Label).display = event.value
-        self.query_one("#hypervisor-options", RadioSet).display = event.value
-
+        radio_set = self.query_one("#hypervisor-options", RadioSet)
+        radio_set.display = event.value
+        pressed_button = radio_set.pressed_button
+        show_api_key = (
+            event.value
+            and pressed_button is not None
+            and pressed_button.id == "proxmox-option"
+        )
+        self.query_one("#pve_api_key_label", Label).display = show_api_key
+        self.query_one("#pve_api_key", Input).display = show_api_key
+        
+    @on(RadioSet.Changed, "#hypervisor-options")
+    def check_proxmox_options(self, event: RadioSet.Changed) -> None:
+        show_api_key = (
+            self.query_one("#hypervisorCheck", Checkbox).value
+            and event.pressed.id == "proxmox-option"
+        )
+        self.query_one("#pve_api_key_label", Label).display = show_api_key
+        self.query_one("#pve_api_key", Input).display = show_api_key
+        
     @on(Select.Changed, "#auth_method")
     def toggle_auth_method_options(self, event: Select.Changed) -> None:
         show_ssh_key_path = event.value == "ssh_key"
@@ -102,18 +126,28 @@ class AddHostWidget(Widget):
         password = self.query_one("#password", Input).value
         ssh_key_path = self.query_one("#ssh_key_path", Input).value.strip() or None
         is_hypervisor = self.query_one("#hypervisorCheck", Checkbox).value
+        pve_api_key = self.query_one("#pve_api_key", Input).value.strip() or None
         selected_button = self.query_one("#hypervisor-options", RadioSet).pressed_button
         hypervisor_type = selected_button.id if selected_button is not None else None
 
         if is_hypervisor and hypervisor_type is None:
             self.notify("Select a hypervisor type.", severity="error")
             return
-
+        
+        if hypervisor_type == "proxmox-option" and pve_api_key is None:
+            self.notify("Please provide an API key to add a Proxmox node.", severity="error")
+            return
+        
         if hypervisor_type == "proxmox-option":
             username = f"{username}@pve"
 
         if not name or not address:
             self.notify("Nickname and hypervisor address are required.", severity="error")
+            return
+        
+        if auth_method == "ssh_key" and is_hypervisor:
+            self.notify("SSH authentication not available for proxmox yet. Please use password", severity="error")
+            self.query_one("#auth_method", Select).value = "password"
             return
 
         server = ServerConfig(
@@ -134,8 +168,9 @@ class AddHostWidget(Widget):
             address,
             name,
             is_hypervisor,
+            pve_api_key if is_hypervisor else None
         )
-
+        
     @work(thread=True)
     def authenticate_host(
         self,
@@ -146,9 +181,10 @@ class AddHostWidget(Widget):
         address: str,
         name: str,
         is_hypervisor: bool,
+        pve_api_key: Optional[str],
     ) -> None:
         try:
-            ticket_data = PVEAuthentivation(app=self.app).authenticate(
+            ticket_data = PVEAuthentication(app=self.app).authenticate(
                 username=username,
                 password=password,
                 host=address,
@@ -157,6 +193,7 @@ class AddHostWidget(Widget):
             self.app.call_from_thread(self.authentication_failed, error)
             return
 
+        # This calls in a background thread which populates the function with the given parameters
         self.app.call_from_thread(
             self.authentication_succeeded,
             cfg_mgr,
@@ -165,6 +202,7 @@ class AddHostWidget(Widget):
             name,
             is_hypervisor,
             ticket_data,
+            pve_api_key,
         )
 
     def authentication_failed(self, error: Exception) -> None:
@@ -188,8 +226,10 @@ class AddHostWidget(Widget):
         name: str,
         is_hypervisor: bool,
         ticket_data: object,
+        pve_api_key: Optional[str],
     ) -> None:
         self.query_one("#add-btn", Button).disabled = False
+        # TODO verfiy the token against something instead of just checking for a data object
         if not isinstance(ticket_data, dict) or not ticket_data.get("data"):
             self.notify(
                 "Authentication failed: unexpected response from host",
@@ -199,10 +239,14 @@ class AddHostWidget(Widget):
 
         cfg_mgr.add_server(server, password=password)
         self.notify(f"Added '{name}' ({server.address})")
-        for input_id in ("#name", "#address", "#username", "#password", "#ssh_key_path"):
+        for input_id in ("#name", "#address", "#username", "#password", "#ssh_key_path", "#pve_api_key"):
             self.query_one(input_id, Input).value = ""
         self.query_one("#port", Input).value = "22"
 
+        if pve_api_key:
+            cfg_mgr.set_pve_api_key(pve_api_key)
+        
+        # Imported here to prevent circular dependancy
         from src.screens.setup_wizard import AddServerScreen, PollingSettingsScreen
 
         next_screen = AddServerScreen if is_hypervisor else PollingSettingsScreen
