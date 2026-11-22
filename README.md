@@ -15,7 +15,6 @@ Support for other Linux environments is planned.
 
 - [Requirements](#requirements)
 - [Install and run](#install-and-run)
-- [Linux keyring setup](#Linux-Prerequisites)
 - [Production](#Production)
 - [Configuration and credentials](#configuration-and-credentials)
 - [Development](#Development)
@@ -59,17 +58,19 @@ $bin = "<Path to project>\Privvy_Cee_TUI\dist" # Or path to the standalone exe
 )
 ```
 
-#### Linux
+#### Linux Install
 
+Go to the installed folder and run this command to pull the setup script and run interactively
 ```bash
-sudo apt update && sudo apt install unzip gnome-keyring libsecret-tools -y
+sudo apt install unzip
+unzip "$HOME/PrivvyCeeTUI-linux-ubuntu-latest.zip" -d "$HOME/your/install/directory"
+cd $HOME/your/install/directory
 ```
 
-If using a headless system
 ```bash
-sudo apt update && sudo apt install dbus-x11
-# Ensure the keyrings directory exists
-mkdir -p ~/.local/share/keyrings
+curl -fsSL -o /tmp/privvycee-setup.sh \
+  https://raw.githubusercontent.com/EspenKoko/Privvy_Cee_TUI/master/privvycee-setup.sh
+bash /tmp/privvycee-setup.sh
 ```
 
 To view app credentials/secrets
@@ -81,9 +82,7 @@ secret-tool search --all service PrivvyCeeToken
 To view all credentials/secrets
 ```bash
 secret-tool search --all application "Python keyring library"
-
 ```
-
 
 Once completed from any directory/terminal on the pc run `privvycee` to open the app in a terminal
 
