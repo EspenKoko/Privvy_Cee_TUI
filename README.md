@@ -58,13 +58,18 @@ $bin = "<Path to project>\Privvy_Cee_TUI\dist" # Or path to the standalone exe
 )
 ```
 
-#### Linux
+#### Linux Install
 
 Go to the installed folder and run this command to pull the setup script and run interactively
 ```bash
-cd /path/to/extracted-bundle
+sudo apt install unzip
+unzip "$HOME/PrivvyCeeTUI-linux-ubuntu-latest.zip" -d "$HOME/your/install/directory"
+cd $HOME/your/install/directory
+```
+
+```bash
 curl -fsSL -o /tmp/privvycee-setup.sh \
-  https://raw.githubusercontent.com/EspenKoko/Privvy_Cee_TUI/develop/privvycee-setup.sh
+  https://raw.githubusercontent.com/EspenKoko/Privvy_Cee_TUI/master/privvycee-setup.sh
 bash /tmp/privvycee-setup.sh
 ```
 
@@ -77,9 +82,7 @@ secret-tool search --all service PrivvyCeeToken
 To view all credentials/secrets
 ```bash
 secret-tool search --all application "Python keyring library"
-
 ```
-
 
 Once completed from any directory/terminal on the pc run `privvycee` to open the app in a terminal
 

@@ -33,12 +33,12 @@ while true; do
     case "$response" in
         [Yy])
             install_dbus_x11=true
-            printf 'Skipping dbus-x11 package install.\n'
+            printf 'Adding dbus-x11 packages install.\n'
             break
             ;;
         [Nn])
             install_dbus_x11=false
-            printf 'Adding dbus-x11 packages install.\n'
+            printf 'Skipping dbus-x11 package install.\n'
             break
             ;;
         *)
@@ -70,9 +70,13 @@ bin_dir="$HOME/.local/bin"
 app_binary="$install_dir/$APP_NAME"
 
 mkdir -p "$install_dir" "$bin_dir" "$HOME/.local/share/keyrings"
+cp -a "$APP_SOURCE/." "$install_dir/"
 chmod u+x "$app_binary"
+
+#Bind paths
 ln -sfn "$app_binary" "$bin_dir/$COMMAND_NAME"
 
-source ~/.profile
+#Reload paths
+source ~/.profile 
 
 printf "\n Setup complete, you may run the Privvycee TUI with the command '%s'\n" "$COMMAND_NAME"
