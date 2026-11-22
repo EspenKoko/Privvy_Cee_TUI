@@ -8,6 +8,9 @@ inputs:
   python-version:
     description: Python version used for the build.
     required: true
+  artifact-suffix:
+    description: Suffix that identifies the Ubuntu build image.
+    required: true
 
 runs:
   using: composite
@@ -38,12 +41,13 @@ runs:
       shell: bash
       env:
         APP_NAME: ${{ inputs.app-name }}
+        ARTIFACT_SUFFIX: ${{ inputs.artifact-suffix }}
       working-directory: dist
-      run: zip -r PrivvyCeeTUI-linux.zip "$APP_NAME"
+      run: zip -r "PrivvyCeeTUI-linux-${ARTIFACT_SUFFIX}.zip" "$APP_NAME"
 
     - name: Upload Linux artifact
       uses: actions/upload-artifact@v4
       with:
-        name: PrivvyCee-linux
-        path: dist/PrivvyCeeTUI-linux.zip # upload-artifact in cd.yml strips the dist prefix from the stored artifact
+        name: PrivvyCee-linux-${{ inputs.artifact-suffix }}
+        path: dist/PrivvyCeeTUI-linux-${{ inputs.artifact-suffix }}.zip
         if-no-files-found: error

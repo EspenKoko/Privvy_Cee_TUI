@@ -2,7 +2,7 @@ name: CD
 
 on:
     push:
-        branches: ["master"] # TODO Rename branch from main to master
+        branches: ["main"]
     workflow_dispatch:
         inputs:
             version:
@@ -50,7 +50,15 @@ jobs:
         # needs: ci
         environment:
             name: PrivvyCee
-        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - runner: ubuntu-22.04
+                      artifact_suffix: ubuntu-22.04
+                    - runner: ubuntu-latest
+                      artifact_suffix: ubuntu-latest
+        runs-on: ${{ matrix.runner }}
         env:
             APP_NAME: ${{ vars.APP_NAME || 'PrivvyCee' }}
 
@@ -63,6 +71,7 @@ jobs:
               with:
                   app-name: ${{ env.APP_NAME }}
                   python-version: ${{ vars.PYTHON_VERSION }}
+                  artifact-suffix: ${{ matrix.artifact_suffix }}
 
     # Add a way to publish last run artefacts without having to rerun the workflow manually and modify this one 
     release:
@@ -91,6 +100,7 @@ jobs:
                   draft: false
                   prerelease: ${{ github.event.inputs.prerelease }}
                   files: |
-                    release-assets/PrivvyCeeTUI-linux.zip
+                    release-assets/PrivvyCeeTUI-linux-ubuntu-22.04.zip
+                    release-assets/PrivvyCeeTUI-linux-ubuntu-latest.zip
                     release-assets/PrivvyCeeTUI-windows.zip
                     release-assets/PrivvyCeeTUIsetup.exe

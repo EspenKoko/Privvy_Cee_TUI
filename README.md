@@ -1,124 +1,57 @@
 # Privvy Cee TUI
 
-A terminal-based homelab dashboard built with Python and Textual for monitoring hosts, VMs, containers, and system health from a lightweight TUI.
+A keyboard-friendly terminal dashboard for monitoring your homelab. Privvy Cee TUI currently connects to Proxmox VE to display host, virtual machine, container, and system health information.
 
-## Overview
+## What it does
 
-Privvy Cee TUI provides a quick, keyboard-friendly view of your infrastructure with:
-- Host resource monitoring
-- VM status and health
-- Container overview
-- Network and storage metrics
-- Local configuration persistence
-- Windows Credential Manager integration for secure secrets storage
+- Shows host resource, network, and storage metrics.
+- Displays virtual machine and container status.
+- Saves application configuration in your user configuration directory.
+- Stores credentials using your operating system's keyring.
 
-## Prerequisites
+Support for other Linux environments is planned.
 
-Before installing and running the app, make sure you have:
+## Contents
 
-- Python 3.10 or newer
-- Windows 10/11
-- PowerShell
+- [Requirements](#requirements)
+- [Install and run](#install-and-run)
+- [Linux keyring setup](#Linux-Prerequisites)
+- [Production](#Production)
+- [Configuration and credentials](#configuration-and-credentials)
+- [Development](#Development)
+- [Documentation](#documentation)
+- [Example dashboard](#example-dashboard)
+- [Credits](#credits)
 
-If you are using a virtual environment, activate it first:
+## Requirements
 
-```powershell
-cd <Path to project>\Privvy_Cee_TUI
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+- A Proxmox VE host reachable from the computer running the app.
+- Windows or Linux. Ubuntu on WSL can use the Linux instructions below; make sure the WSL environment can reach your Proxmox host and VPN.
+
+## Production
+
+### Build executable with installer
+
+#### Windows Install
+To build the app as a one-folder executable and package it in an installer:
+**NB!** requires Inno 6
+
+```shell
+./build.ps1
 ```
 
-Restart your terminal session and run the app with
-```powershell
-PrivvyCee
+### Build the app as a standalone file:
+
+```shell
+./build-standalone-app.ps1
 ```
 
-## Getting started
+**Add path if not using the installer**
 
-### Standard run
+Output will be in `installer-output\PrivvyCeeTUIsetup.exe`
 
-From the project root:
-
-```cmd
-python -m main
-```
-
-### Development mode with live reload
-
-```powershell
-textual run --dev main
-```
-
-### Debug console
-
-Open a separate terminal:
-
-```powershell
-textual console
-```
-
-Then run in another terminal
-
-```powershell
-textual run --dev main
-```
-
-## Exiting the TUI
-
-Use:
-
-```text
-Ctrl + Q
-```
-
-## Configuration and storage
-
-All application configuration is stored at in AppData and windows credential manager
-**NB!** This file is very important as modifications or deletions in the file outside the app can result in isolated windows credentials that cannot be mapped back to the app
-
-```text
-%APPDATA%\Local\privvy_cee_tui
-```
-
-## Install and run
-
-### Development run
-From the project root, install the app in editable mode:
-
-```powershell
-cd <Path to project>\Privvy_Cee_TUI
-py -3.10 -m pip install --upgrade pip
-py -3.10 -m pip install --user --editable .
-```
-
-If `homelab` is not recognized, add the user Scripts folder to your PATH and reopen PowerShell:
-
-```powershell
-$env:Path += ";$env:APPDATA\Python\Python310\Scripts"
-```
-
-Then run the app from any directory:
-
-```powershell
-homelab
-```
-
-If you used a local virtual environment instead:
-
-```powershell
-cd <Path to project>\Privvy_Cee_TUI
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install --editable .
-homelab
-```
-
-### Production exe file run
-
-Add executable to the path once built
-
-```powershell
-$bin = "<Path to project>\Privvy_Cee_TUI\dist"
+```shell
+$bin = "<Path to project>\Privvy_Cee_TUI\dist" # Or path to the standalone exe
 [Environment]::SetEnvironmentVariable(
   "Path",
   [Environment]::GetEnvironmentVariable("Path", "User") + ";$bin",
@@ -126,23 +59,195 @@ $bin = "<Path to project>\Privvy_Cee_TUI\dist"
 )
 ```
 
-## Build executable
+#### Linux
 
-To build the app as a one-folder executable and package it in an installer:
-
-```powershell
-./build.ps1
+```bash
+sudo apt update && sudo apt install unzip gnome-keyring libsecret-tools -y
 ```
 
-To build the app as a single file:
-
-```powershell
-./build-combined.ps1
+If using a headless system
+```bash
+sudo apt update && sudo apt install dbus-x11
+# Ensure the keyrings directory exists
+mkdir -p ~/.local/share/keyrings
 ```
+
+To view app credentials/secrets
+```bash
+secret-tool search --all service PrivvyCeeTui
+secret-tool search --all service PrivvyCeeToken
+```
+
+To view all credentials/secrets
+```bash
+secret-tool search --all application "Python keyring library"
+
+```
+
+
+Once completed from any directory/terminal on the pc run `privvycee` to open the app in a terminal
+
+---
+
+## Configuration and storage
+
+All application configuration for windows is stored at in AppData and Windows credential manager and for linux in `- ~/.local/share/keyrings/Default.keyring`
+**NB!** The config files are very important. Modifications or deletions in the file outside the app can result in isolated credentials that cannot be mapped back to the app
+
+**For windows:**
+- %APPDATA%\Local\privvy_cee_tui\config.toml
+
+**For Linux:**
+- ~/.config/privvy_cee_tui/config.toml
+
+---
+
+## Development
+
+### Windows
+
+**Prerequisites**
+- Python 3.10 or newer
+
+If you are using a virtual environment, activate it first:
+```shell
+cd <Path to project>\Privvy_Cee_TUI
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### Linux
+
+**Prerequisites**
+- Python 3.10 or newer
+- compatible keyring package for your OS
+
+If you are using a virtual environment, activate it first:
+```bash
+python3.10 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install keyring # for os keyring
+```
+
+#### Debian
+
+```bash
+sudo apt update && sudo apt install gnome-keyring -y
+```
+
+If using a headless system
+```bash
+sudo apt update && sudo apt install dbus-x11
+# Ensure the keyrings directory exists
+mkdir -p ~/.local/share/keyrings
+```
+
+Start the secrets component of gnome-keyring-daemon if not done automatically after app run
+```bash
+eval $(echo -n "your_keyring_password" | gnome-keyring-daemon --start --unlock --components=secrets)
+```
+
+To view encrypted file direcly
+```bash
+python -c "
+import secretstorage
+conn = secretstorage.dbus_init()
+for col in secretstorage.get_all_collections(conn):
+    print(f'=== Collection: {col.get_label()} ===')
+    for item in col.get_all_items():
+        print(f'Label: {item.get_label()} | Attrs: {item.get_attributes()} | Secret: {item.get_secret().decode()}')
+"
+```
+
+OR
+
+Install libsecret-tools to view in terminal
+```bash
+sudo apt install libsecret-tools -y
+secret-tool search --all service PrivvyCeeTui
+secret-tool search --all service PrivvyCeeToken
+```
+
+To view all secrets
+```bash
+secret-tool search --all application "Python keyring library"
+
+```
+
+#### Arch 
+<!-- TODO -->
+
+### Standard run
+
+From the project root:
+
+```shell
+python -m main
+```
+
+### Development mode with live reload
+
+Open a second terminal and start the console:
+
+```shell
+textual console
+```
+
+Then run the app in the first terminal:
+
+```shell
+textual run --dev main
+```
+
+### Development run with path setup
+From the project root, install the app in editable mode:
+Config taken from `pyproject.toml`
+
+If encoutering errors when running
+```shell
+python -m pip install --user pipx
+python -m pipx ensurepath
+```
+
+**Install the project in the current folder**
+
+If using a venv
+```shell
+cd <Path to project>\Privvy_Cee_TUI
+python -m pip install --editable . 
+```
+
+If not using a venv **not recommended**
+```shell
+cd <Path to project>\Privvy_Cee_TUI
+python -m pip install --user --editable .
+```
+
+If `homelab` is not recognized, add the user Scripts folder to your PATH and reopen shell:
+
+```shell
+$env:Path += ";$env:APPDATA\Python\Python310\Scripts"
+```
+
+Then run the app from any directory:
+
+```shell
+homelab
+```
+
+#### Uninstall the app
+
+```shell
+python -m pip uninstall homelab
+```
+
+---
 
 ## Documentation
 
-Api documentation can be found in the `Proxmox.json`
+The Proxmox API reference used by the project is in [`Proxmox.json`](Proxmox.json).
 
 ## Example dashboard
 
@@ -180,12 +285,6 @@ Alerts
 • None
 ```
 
-## Contribution
+## Credits
 
-Cover image source:
-
-```text
-Image: flaticon.com/free-icons/biometric-identification
-```
-
-This cover has been designed using resources from Flaticon.com.
+Cover image source: [Biometric identification icons](https://www.flaticon.com/free-icons/biometric-identification) from Flaticon.
