@@ -15,7 +15,6 @@ Support for other Linux environments is planned.
 
 - [Requirements](#requirements)
 - [Install and run](#install-and-run)
-- [Linux keyring setup](#Linux-Prerequisites)
 - [Production](#Production)
 - [Configuration and credentials](#configuration-and-credentials)
 - [Development](#Development)
@@ -61,15 +60,12 @@ $bin = "<Path to project>\Privvy_Cee_TUI\dist" # Or path to the standalone exe
 
 #### Linux
 
+Go to the installed folder and run this command to pull the setup script and run interactively
 ```bash
-sudo apt update && sudo apt install unzip gnome-keyring libsecret-tools -y
-```
-
-If using a headless system
-```bash
-sudo apt update && sudo apt install dbus-x11
-# Ensure the keyrings directory exists
-mkdir -p ~/.local/share/keyrings
+cd /path/to/extracted-bundle
+curl -fsSL -o /tmp/privvycee-setup.sh \
+  https://raw.githubusercontent.com/EspenKoko/Privvy_Cee_TUI/develop/privvycee-setup.sh
+bash /tmp/privvycee-setup.sh
 ```
 
 To view app credentials/secrets
