@@ -9,7 +9,6 @@ from textual import on
 
 from src.screens.welcome import WelcomeScreen
 from src.services.configuration import ConfigManager, AppSettings
-from src.services.token_store import TokenStore
 from src.widgets.host_Panel import HostPanel
 from src.widgets.host_Panel_details import HostPanelDetails
 from src.widgets.server_panel import ServerPanel
@@ -93,11 +92,15 @@ class ApplicationSettings(Vertical):
                     )
             with Horizontal():
                 with Vertical():
-                    yield Label("Secure app with Login")
+                    yield Label("Enable polling")
                     yield Select(
-                        [("Yes", "yes"), ("No", "no")],
-                        id="settings-login",
+                        [("On", True), ("Off", False)],
+                        id="settings-polling",
                     )
+                with Vertical():
+                    yield Label("Update API key")
+                    yield Input(id="pve_api_key")
+                    
             with Horizontal():
                 yield Button("Save Settings", id="save-app-settings-btn", variant="success")
                 yield Button("Delete All Data", id="data-deletion-btn", variant="error")
@@ -110,9 +113,10 @@ class ApplicationSettings(Vertical):
         cfg_mgr: ConfigManager = self.app.config_manager
         settings = cfg_mgr.config.settings
         self.query_one("#settings-polling-rate", Input).value = str(settings.polling_rate_seconds)
+        self.query_one("#settings-polling", Select).value = settings.polling
         self.query_one("#settings-theme", Select).value = settings.theme
         self.query_one("#settings-log-level", Select).value = settings.log_level
-
+        
     @on(Button.Pressed, "#save-app-settings-btn")
     def on_save_app_settings(self) -> None:
         cfg_mgr: ConfigManager = self.app.config_manager
@@ -123,17 +127,24 @@ class ApplicationSettings(Vertical):
         except ValueError:
             self._set_status("[red]Polling rate must be a number.[/red]")
             return
-
+        
+        api_key = self.query_one("#pve_api_key", Input).value
+        if api_key:
+            cfg_mgr.set_pve_api_key(api_key)
+            
         theme = self.query_one("#settings-theme", Select).value
         log_level = self.query_one("#settings-log-level", Select).value
-
+        polling = self.query_one("#settings-polling", Select).value
+        
         cfg_mgr.config.settings = AppSettings(
-            polling_rate_seconds=rate, theme=theme, log_level=log_level,
+            polling_rate_seconds=rate, polling=polling, theme=theme, log_level=log_level,
         )
         cfg_mgr.save()
         for screen in self.app.screen_stack:
-            for servers_tab in screen.query(ServerPanel):
-                servers_tab.update_polling_interval()
+            for panel_type in (HostPanel, HostPanelDetails, ServerPanel):
+                for panel in screen.query(panel_type):
+                    panel.update_polling_interval()
+        self.query_one("#pve_api_key", Input).value = ""
         self._set_status("[green]Application settings saved.[/green]")
 
     @on(Button.Pressed, "#data-deletion-btn")
@@ -147,7 +158,6 @@ class ApplicationSettings(Vertical):
         cfg_mgr: ConfigManager = self.app.config_manager
         try:
             self._stop_dashboard_polling()
-            TokenStore().delete_token()
             cfg_mgr.delete_all_data()
         except Exception:
             self._set_status(

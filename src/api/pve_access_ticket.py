@@ -5,6 +5,7 @@ from typing import Optional
 from textual.app import App as TextualApp
 import requests
 import logging
+import keyring
 
 from dotenv import load_dotenv
 
@@ -19,8 +20,8 @@ else:
     # allow python-dotenv to search parent directories if layout differs
     load_dotenv()
 
-from src.services.token_store import TokenStore
 from src.services.configuration import ConfigManager
+from src.models.keyring_data import ServiceNames, ServiceTicketNames
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,9 @@ DEFAULT_HOST = os.getenv("PVE_HOST", "127.0.0.1")
 DEFAULT_USER = os.getenv("PVE_USER")
 DEFAULT_PASSWORD = os.getenv("PVE_PASS")
 
-class PVEAuthentivation:
-
+class PVEAuthentication:
+    SERVICE_NAME = ServiceNames.TOKEN_SERVICE
+    
     def __init__(self, app: Optional[TextualApp] = None) -> None:
         # Prefer an injected textual App so we reuse its `config_manager`.
         if app is not None:
@@ -95,22 +97,41 @@ class PVEAuthentivation:
                 raise RuntimeError("Invalid JSON response from PVE API") from e
         return response.text
 
+    # TODO Vefity the token 
+
     def save_access_ticket(self, ticket_data: dict):
-        CSRFToken = ticket_data.get("data", {}).get("CSRFPreventionToken", "")
-        ticket = ticket_data.get("data", {}).get("ticket", "")
+        response_data = ticket_data.get("data", {})
+        for ticket_name in ServiceTicketNames:
+            token = response_data.get(ticket_name.response_field)
+            if not token:
+                logger.warning("No %s found in ticket_data", ticket_name.response_field)
+                continue
+            self.save_ticket_data(ticket_name.keyring_name, token)
 
-        if not CSRFToken:
-            logger.warning("No CSRFPreventionToken found in ticket_data")
-        else:
-            TokenStore().save_ticket_data("CSRFToken", CSRFToken)
-
-        if not ticket:
-            logger.warning("No ticket found in ticket_data")
-        else:
-            TokenStore().save_ticket_data("AccessTicket", ticket)
-
-    def get_ticket_value(self) -> str:
-        return TokenStore().get_ticket_data()
+    def save_ticket_data(self, name: str, token: str) -> None:
+        """Save token to keyring; if that fails, write encrypted file."""
+        try:
+            keyring.set_password(self.SERVICE_NAME, name, token)
+            return
+        except Exception:
+            pass
+        
+    def get_ticket_value(self, name: str) -> str:
+        """Retrieve token from keyring, or decrypt fallback file."""
+        try:
+            token = keyring.get_password(self.SERVICE_NAME, name)
+            if token:
+                return token
+        except Exception:
+            pass
+        
+    def delete_tokens(self) -> None:
+        """Remove all registered tickets from keyring."""
+        for ticket_name in ServiceTicketNames:
+            try:
+                keyring.delete_password(self.SERVICE_NAME, ticket_name.keyring_name)
+            except keyring.errors.PasswordDeleteError:
+                pass
 
     def authenticate(
         self,
@@ -125,7 +146,7 @@ class PVEAuthentivation:
         return ticket_data
 
 if __name__ == "__main__":
-    auth = PVEAuthentivation()
+    auth = PVEAuthentication()
     ticket_data = auth.fetch_access_ticket()
     auth.save_access_ticket(ticket_data)
     print("Saved ticket")

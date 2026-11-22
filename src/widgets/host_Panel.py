@@ -1,4 +1,5 @@
 from pathlib import Path
+from functools import partial
 
 from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal
@@ -7,6 +8,7 @@ from textual.widgets import ProgressBar, Label, Static
 
 from src.api.pve_api_service import CallProxmox
 from src.services.api_call_paths import ProxmoxApiPaths
+from src.services.polling_rate import PollingRateService
 
 class HostPanel(Vertical):
     _css_path = Path(__file__).resolve().parents[1] / "css" / "host_panel.tcss"
@@ -14,7 +16,8 @@ class HostPanel(Vertical):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._polling_enabled = True
+        polling_status = PollingRateService.get_polling_status(self.app.config_manager)
+        self._polling_enabled = polling_status
         self._polling_timer: Timer | None = None
     
     def compose(self) -> ComposeResult:
@@ -37,8 +40,19 @@ class HostPanel(Vertical):
                 yield Static(id="extra_stats")
 
     def on_mount(self) -> None:
-        self.refresh_stats()
-        self._polling_timer = self.set_interval(1.0, self.refresh_stats)
+        self.update_polling_interval()
+        self.refresh_data()
+    
+    def update_polling_interval(self) -> None:
+        config_manager = getattr(self.app, "config_manager", None)
+        polling_rate = PollingRateService.get_polling_rate_seconds(config_manager)
+        self._polling_enabled = PollingRateService.get_polling_status(config_manager)
+
+        if self._polling_timer is not None:
+            self._polling_timer.stop()
+            self._polling_timer = None
+        if self._polling_enabled:
+            self._polling_timer = self.set_interval(polling_rate, self.refresh_data)
 
     def stop_polling(self) -> None:
         self._polling_enabled = False
@@ -46,35 +60,43 @@ class HostPanel(Vertical):
             self._polling_timer.stop()
             self._polling_timer = None
 
-    def refresh_stats(self) -> None:
-        if not self._polling_enabled:
+    def refresh_data(self, *, force: bool = False) -> None:
+        if not self._polling_enabled and not force:
             return
-        self.run_worker(self.poll_metrics, exclusive=True, thread=True)
+        self.run_worker(
+            partial(self.fetch_metrics, force=force),
+            exclusive=True,
+            thread=True,
+        )
 
-    def poll_metrics(self) -> None:
-        if not self._polling_enabled:
+    def fetch_metrics(self, force: bool = False) -> None:
+        if not self._polling_enabled and not force:
             return
         config_manager = getattr(self.app, "config_manager", None)
         if config_manager is None:
             self.app.call_from_thread(
-                self._show_api_error, "No configuration manager is available."
+                self._show_api_error,
+                "No configuration manager is available.",
+                force,
             )
             return
 
         try:
             hosts = config_manager.load().hosts
-            if not self._polling_enabled:
+            if not self._polling_enabled and not force:
                 return
             if not hosts:
                 self.app.call_from_thread(
-                    self._show_api_error, "No Proxmox hosts are configured."
+                    self._show_api_error,
+                    "No Proxmox hosts are configured.",
+                    force,
                 )
                 return
 
             api = CallProxmox(app=self.app)
             last_error = None
             for host in hosts:
-                if not self._polling_enabled:
+                if not self._polling_enabled and not force:
                     return
                 try:
                     response = api.call_proxmox(
@@ -98,17 +120,31 @@ class HostPanel(Vertical):
                     None,
                 )
                 if node is not None:
-                    self.app.call_from_thread(self._update_metrics, node, host.name)
+                    self.app.call_from_thread(
+                        self._update_metrics,
+                        node,
+                        host.name,
+                        force,
+                    )
                     return
 
             message = last_error or "No API node matched a configured host."
-            self.app.call_from_thread(self._show_api_error, message)
+            self.app.call_from_thread(self._show_api_error, message, force)
         except (OSError, ValueError, RuntimeError) as error:
-            if self._polling_enabled:
-                self.app.call_from_thread(self._show_api_error, str(error))
+            if self._polling_enabled or force:
+                self.app.call_from_thread(
+                    self._show_api_error,
+                    str(error),
+                    force,
+                )
 
-    def _update_metrics(self, node: dict, configured_name: str) -> None:
-        if not self._polling_enabled:
+    def _update_metrics(
+        self,
+        node: dict,
+        configured_name: str,
+        force: bool = False,
+    ) -> None:
+        if not self._polling_enabled and not force:
             return
 
         def percentage(value_name: str, maximum_name: str) -> float:
@@ -136,8 +172,8 @@ class HostPanel(Vertical):
         hours = remainder // 3600
         self.query_one("#extra_stats", Static).update(f"{days}d {hours:02d}h")
 
-    def _show_api_error(self, message: str) -> None:
-        if not self._polling_enabled:
+    def _show_api_error(self, message: str, force: bool = False) -> None:
+        if not self._polling_enabled and not force:
             return
         self.query_one("#host-label", Label).update("HOST: API unavailable")
         self.query_one("#extra_stats", Static).update(f"[red]{message}[/red]")

@@ -15,7 +15,7 @@ class ServerConfig(BaseModel):
     auth_method: str = "password"  # "password" or "ssh_key"
     ssh_key_path: Optional[str] = None
     is_hypervisor: bool = False
-    # NOTE: no password field here on purpose — that lives in keyring only.
+    # NOTE: no password or api key field here on purpose — that lives in keyring only.
 
     @property
     def credential_key(self) -> str:
@@ -65,6 +65,7 @@ class ServerConfig(BaseModel):
 
 class AppSettings(BaseModel):
     polling_rate_seconds: int = 5
+    polling: bool = True
     theme: str = "textual-dark"
     log_level: str = "INFO"
 

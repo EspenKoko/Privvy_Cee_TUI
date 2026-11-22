@@ -56,7 +56,9 @@ class CallProxmox:
 
         user_realm = conf.hosts[0].username
         token_id = "Homelab-Token"
-        secret = "7228eeb2-169c-45a0-ba4f-72d3b66efcdd"
+        secret = cfg.get_pve_api_key()
+        if not secret:
+            raise RuntimeError("No Proxmox API key is configured in the keyring")
         
         token_value = f"PVEAPIToken={user_realm}!{token_id}={secret}"
 

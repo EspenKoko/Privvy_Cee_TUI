@@ -10,9 +10,7 @@ import keyring
 import platformdirs
 
 from src.models.configuration_type import ServerConfig, AppConfig, AppSettings
-
-APP_NAME = "privvy_cee_tui"
-KEYRING_SERVICE = "PrivvyCeeTui"  # namespace for all our keyring entries
+from src.models.keyring_data import ServiceNames
 
 
 def _strip_none(obj):
@@ -29,10 +27,12 @@ class ConfigManager:
     Roughly the Python equivalent of binding IConfiguration to a POCO,
     except we own the read/write path explicitly instead of DI doing it for us.
     """
-
+    
+    APP_NAME = "privvy_cee_tui"
+    KEYRING_SERVICE = ServiceNames.CONFIG_SERVICE
+    
     def __init__(self):
-        # Saves to C:\Users\espen.koko\AppData\Local\privvy_cee_ui
-        config_dir = Path(platformdirs.user_config_dir(APP_NAME, appauthor=False))
+        config_dir = Path(platformdirs.user_config_dir(self.APP_NAME, appauthor=False))
         config_dir.mkdir(parents=True, exist_ok=True)
         self.config_path = config_dir / "config.toml"
         self.config: AppConfig = AppConfig()
@@ -65,19 +65,42 @@ class ConfigManager:
         with open(self.config_path, "wb") as f:
             tomli_w.dump(data, f)
 
-    # --- Credential handling (never touches the TOML file) ---
+    # --- Credential handling ---
 
+    # TODO Can look into combining the keyring functions and populating the usernames from their calling classes
     def set_password(self, server: ServerConfig, password: str) -> None:
-        keyring.set_password(KEYRING_SERVICE, server.credential_key, password)
+        keyring.set_password(self.KEYRING_SERVICE, server.credential_key, password)
 
     def get_password(self, server: ServerConfig) -> Optional[str]:
-        return keyring.get_password(KEYRING_SERVICE, server.credential_key)
+        return keyring.get_password(self.KEYRING_SERVICE, server.credential_key)
 
     def delete_password(self, server: ServerConfig) -> None:
         try:
-            keyring.delete_password(KEYRING_SERVICE, server.credential_key)
+            keyring.delete_password(self.KEYRING_SERVICE, server.credential_key)
         except keyring.errors.PasswordDeleteError:
-            pass  # already gone, that's fine
+            pass 
+
+    def set_pve_api_key(self, api_key: str) -> None:
+        keyring.set_password(
+            self.KEYRING_SERVICE,
+            ServiceNames.API_KEY_USERNAME,
+            api_key,
+        )
+
+    def get_pve_api_key(self) -> Optional[str]:
+        return keyring.get_password(
+            self.KEYRING_SERVICE,
+            ServiceNames.API_KEY_USERNAME,
+        )
+
+    def delete_pve_api_key(self) -> None:
+        try:
+            keyring.delete_password(
+                self.KEYRING_SERVICE,
+                ServiceNames.API_KEY_USERNAME,
+            )
+        except keyring.errors.PasswordDeleteError:
+            pass
 
     def add_server(self, serverConfig: ServerConfig, password: Optional[str] = None) -> None:
         if serverConfig.is_hypervisor:
@@ -99,6 +122,10 @@ class ConfigManager:
     def delete_all_data(self) -> None:
         for server in [*self.config.hosts, *self.config.servers]:
             self.delete_password(server)
+        from src.api.pve_access_ticket import PVEAuthentication
+
+        PVEAuthentication().delete_tokens()
+        self.delete_pve_api_key()
 
         self.config_path.unlink(missing_ok=True)
         self.config = AppConfig()

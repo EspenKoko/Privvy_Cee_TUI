@@ -1,5 +1,6 @@
 
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 
 from textual.app import ComposeResult
@@ -80,7 +81,8 @@ class ServerPanel(VerticalScroll):
         super().__init__(*args, **kwargs)
         self.servers: list[ServerInfo] = []
         self._fetching = False
-        self._polling_enabled = True
+        polling_status = PollingRateService.get_polling_status(self.app.config_manager)
+        self._polling_enabled = polling_status
         self._polling_timer: Timer | None = None
         
     def compose(self) -> ComposeResult:
@@ -98,18 +100,20 @@ class ServerPanel(VerticalScroll):
             yield ServerRow(server)
 
     def on_mount(self) -> None:
-        self.refresh_data()
         self.update_polling_interval()
+        self.refresh_data()
 
     def update_polling_interval(self) -> None:
-        if not self._polling_enabled:
-            return
+        config_manager = getattr(self.app, "config_manager", None)
+        polling_rate = PollingRateService.get_polling_rate_seconds(config_manager)
+        self._polling_enabled = PollingRateService.get_polling_status(config_manager)
+
         if self._polling_timer is not None:
             self._polling_timer.stop()
-        polling_rate = PollingRateService.get_polling_rate_seconds(
-            self.app.config_manager
-        )
-        self._polling_timer = self.set_interval(polling_rate, self.refresh_data)
+            self._polling_timer = None
+        if self._polling_enabled:
+            self._polling_timer = self.set_interval(polling_rate, self.refresh_data)
+
 
     def stop_polling(self) -> None:
         self._polling_enabled = False
@@ -117,13 +121,17 @@ class ServerPanel(VerticalScroll):
             self._polling_timer.stop()
             self._polling_timer = None
 
-    def refresh_data(self) -> None:
-        if not self._polling_enabled:
+    def refresh_data(self, *, force: bool = False) -> None:
+        if not self._polling_enabled and not force:
             return
         if self._fetching:          # previous request still running, skip this tick
             return
         self._fetching = True
-        self.run_worker(self._fetch_vm_metrics, exclusive=True, thread=True)
+        self.run_worker(
+            partial(self.fetch_metrics, force=force),
+            exclusive=True,
+            thread=True,
+        )
 
 
     def set_status(self, slug: str, status: str) -> None:
@@ -131,9 +139,9 @@ class ServerPanel(VerticalScroll):
         label.update(status)
         label.styles.color = STATUS_COLOR[status]
     
-    def _fetch_vm_metrics(self) -> None:
+    def fetch_metrics(self, force: bool = False) -> None:
         try:
-            if not self._polling_enabled:
+            if not self._polling_enabled and not force:
                 return
             cfg_mgr = self.app.config_manager
             cfg_mgr.load()
@@ -141,7 +149,7 @@ class ServerPanel(VerticalScroll):
             errors: list[str] = []
 
             for host_config in cfg_mgr.config.hosts:
-                if not self._polling_enabled:
+                if not self._polling_enabled and not force:
                     return
                 api = CallProxmox(app=self.app)
 
@@ -149,7 +157,7 @@ class ServerPanel(VerticalScroll):
                     ("VM", ProxmoxApiPaths.qemu(host_config.name)),
                     ("CT", ProxmoxApiPaths.lxc(host_config.name)),
                 ):
-                    if not self._polling_enabled:
+                    if not self._polling_enabled and not force:
                         return
                     try:
                         print("Logs", resource_type, path)
@@ -166,11 +174,16 @@ class ServerPanel(VerticalScroll):
                     except RuntimeError as error:
                         errors.append(f"{host_config.name}: {error}")
 
-            if self._polling_enabled:
-                self.app.call_from_thread(self._update_servers, rows, errors)
+            if self._polling_enabled or force:
+                self.app.call_from_thread(self._update_metrics, rows, errors, force)
         except (OSError, ValueError, RuntimeError) as error:
-            if self._polling_enabled:
-                self.app.call_from_thread(self._update_servers, [], [str(error)])
+            if self._polling_enabled or force:
+                self.app.call_from_thread(
+                    self._update_metrics,
+                    [],
+                    [str(error)],
+                    force,
+                )
         finally:
             self._fetching = False
 
@@ -211,8 +224,13 @@ class ServerPanel(VerticalScroll):
             node=getattr(resource, "node", None),
         )
 
-    def _update_servers(self, servers: list[ServerInfo], errors: list[str]) -> None:
-        if not self._polling_enabled:
+    def _update_metrics(
+        self,
+        servers: list[ServerInfo],
+        errors: list[str],
+        force: bool = False,
+    ) -> None:
+        if not self._polling_enabled and not force:
             return
         self.servers = sorted(servers, key=lambda server: server.name.casefold())
         
